@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<!--[if IE 9]>         <html class="ie9 no-focus" lang="en"> <![endif]-->
+<!--[if gt IE 9]><!--> <html class="no-focus" lang="en"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+
+        <title>OneUI - Admin Dashboard Template &amp; UI Framework</title>
+
+        <meta name="description" content="OneUI - Admin Dashboard Template &amp; UI Framework created by pixelcave and published on Themeforest">
+        <meta name="author" content="pixelcave">
+        <meta name="robots" content="noindex, nofollow">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <!-- Icons -->
+        <!-- The following icons can be replaced with your own, they are used by desktop and mobile browsers -->
+        <link rel="shortcut icon" href="../../../../static/oneui/assets/img/favicons/favicon.png">
+
+        <link rel="icon" type="image/png" href="../../../../static/oneui/assets/img/favicons/favicon-16x16.png" sizes="16x16">
+        <link rel="icon" type="image/png" href="../../../../static/oneui/assets/img/favicons/favicon-32x32.png" sizes="32x32">
+        <link rel="icon" type="image/png" href="../../../../static/oneui/assets/img/favicons/favicon-96x96.png" sizes="96x96">
+        <link rel="icon" type="image/png" href="../../../../static/oneui/assets/img/favicons/favicon-160x160.png" sizes="160x160">
+        <link rel="icon" type="image/png" href="../../../../static/oneui/assets/img/favicons/favicon-192x192.png" sizes="192x192">
+
+        <link rel="apple-touch-icon" sizes="57x57" href="../../../../static/oneui/assets/img/favicons/apple-touch-icon-57x57.png">
+        <link rel="apple-touch-icon" sizes="60x60" href="../../../../static/oneui/assets/img/favicons/apple-touch-icon-60x60.png">
+        <link rel="apple-touch-icon" sizes="72x72" href="../../../../static/oneui/assets/img/favicons/apple-touch-icon-72x72.png">
+        <link rel="apple-touch-icon" sizes="76x76" href="../../../../static/oneui/assets/img/favicons/apple-touch-icon-76x76.png">
+        <link rel="apple-touch-icon" sizes="114x114" href="../../../../static/oneui/assets/img/favicons/apple-touch-icon-114x114.png">
+        <link rel="apple-touch-icon" sizes="120x120" href="../../../../static/oneui/assets/img/favicons/apple-touch-icon-120x120.png">
+        <link rel="apple-touch-icon" sizes="144x144" href="../../../../static/oneui/assets/img/favicons/apple-touch-icon-144x144.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="../../../../static/oneui/assets/img/favicons/apple-touch-icon-152x152.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="../../../../static/oneui/assets/img/favicons/apple-touch-icon-180x180.png">
+        <!-- END Icons -->
+
+        <!-- Stylesheets -->
+        <!-- Web fonts -->
+        <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400italic,600,700%7CRoboto:300,400,400italic,600,700">
+
+        <!-- Page JS Plugins CSS -->
+        <link rel="stylesheet" href="../../../../static/oneui/assets/js/plugins/datatables/jquery.dataTables.min.css">
+
+        <!-- Bootstrap and OneUI CSS framework -->
+        <link rel="stylesheet" href="../../../../static/oneui/assets/css/bootstrap.min.css">
+        <link rel="stylesheet" id="css-main" href="../../../../static/oneui/assets/css/oneui.css">
+
+        <!-- You can include a specific file from css/themes/ folder to alter the default color theme of the template. eg: -->
+        <!-- <link rel="stylesheet" id="css-theme" href="../../../../static/oneui/assets/css/themes/flat.min.css"> -->
+        <!-- END Stylesheets -->
+    </head>
+    <body onload="FocusAddButton();">
+        <!-- Page Container -->
+        <!--
+            Available Classes:
+
+            'enable-cookies'             Remembers active color theme between pages (when set through color theme list)
+
+            'sidebar-l'                  Left Sidebar and right Side Overlay
+            'sidebar-r'                  Right Sidebar and left Side Overlay
+            'sidebar-mini'               Mini hoverable Sidebar (> 991px)
+            'sidebar-o'                  Visible Sidebar by default (> 991px)
+            'sidebar-o-xs'               Visible Sidebar by default (< 992px)
+
+            'side-overlay-hover'         Hoverable Side Overlay (> 991px)
+            'side-overlay-o'             Visible Side Overlay by default (> 991px)
+
+            'side-scroll'                Enables custom scrolling on Sidebar and Side Overlay instead of native scrolling (> 991px)
+
+            'header-navbar-fixed'        Enables fixed header
+        -->
+        <div id="page-container" class="header-navbar-fixed">
+
+            <!-- Header -->
+            <header id="header-navbar" class="content-mini content-mini-full">
+                <!-- Header Navigation Right -->
+                <ul class="nav-header pull-right">
+                    <li>
+                        <div class="btn-group">
+                            <button class="btn btn-default btn-image dropdown-toggle" data-toggle="dropdown" type="button">
+                                <img src="../../../../static/oneui/assets/img/avatars/avatar10.jpg" alt="Avatar">
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-right">
+                                <li class="dropdown-header">Profile</li>
+                                <li>
+                                    <a tabindex="-1" href="base_pages_inbox.html">
+                                        <i class="si si-envelope-open pull-right"></i>
+                                        <span class="badge badge-primary pull-right">3</span>Inbox
+                                    </a>
+                                </li>
+                                <li>
+                                    <a tabindex="-1" href="base_pages_profile.html">
+                                        <i class="si si-user pull-right"></i>
+                                        <span class="badge badge-success pull-right">1</span>Profile
+                                    </a>
+                                </li>
+                                <li>
+                                    <a tabindex="-1" href="javascript:void(0)">
+                                        <i class="si si-settings pull-right"></i>Settings
+                                    </a>
+                                </li>
+                                <li class="divider"></li>
+                                <li class="dropdown-header">Actions</li>
+                                <li>
+                                    <a tabindex="-1" href="base_pages_lock.html">
+                                        <i class="si si-lock pull-right"></i>Lock Account
+                                    </a>
+                                </li>
+                                <li>
+                                    <a tabindex="-1" href="base_pages_login.html">
+                                        <i class="si si-logout pull-right"></i>Log out
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+                <!-- END Header Navigation Right -->
+
+                <!-- Header Navigation Left -->
+                <ul class="nav-header pull-left">
+                    <li class="hidden-md hidden-lg">
+                        <!-- Layout API, functionality initialized in App() -> uiLayoutApi() -->
+                        <button class="btn btn-default" data-toggle="layout" data-action="sidebar_toggle" type="button">
+                            <i class="fa fa-navicon"></i>
+                        </button>
+                    </li>
+                    <li>
+                        <!-- Opens the Apps modal found at the bottom of the page, before including JS code -->
+                        <button class="btn btn-default pull-right" data-toggle="modal" data-target="#apps-modal" type="button">
+                            <i class="si si-grid"></i>
+                        </button>
+                    </li>
+                    <li class="visible-xs">
+                        <!-- Toggle class helper (for .js-header-search below), functionality initialized in App() -> uiToggleClass() -->
+                        <button class="btn btn-default" data-toggle="class-toggle" data-target=".js-header-search" data-class="header-search-xs-visible" type="button">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </li>
+                    <li class="js-header-search header-search">
+                        <form class="form-horizontal" action="base_pages_search.html" method="post">
+                            <div class="form-material form-material-primary input-group remove-margin-t remove-margin-b">
+                                <input class="form-control" type="text" id="base-material-text" name="base-material-text" placeholder="Search..">
+                                <span class="input-group-addon"><i class="si si-magnifier"></i></span>
+                            </div>
+                        </form>
+                    </li>
+                </ul>
+                <!-- END Header Navigation Left -->
+            </header>
+            <!-- END Header -->
+
+            <!-- Main Container -->
+            <main id="main-container">
+                <!-- Page Header -->
+                <div class="content bg-gray-lighter">
+                    <div class="row items-push">
+                        <div class="col-sm-7">
+                            <h1 class="page-heading">
+                                {{ table_name.replace('_',' ')|capitalize }} <small>Tables transformed with dynamic features. Powered by DataTables.</small>
+                            </h1>
+                        </div>
+                        <div class="col-sm-5 text-right hidden-xs">
+                            <ol class="breadcrumb push-10-t">
+                                <li>Tables</li>
+                                <li><a class="link-effect" href="">DataTables</a></li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                <!-- END Page Header -->
+
+                <!-- Page Content -->
+                <div class="content">
+                    <!-- Dynamic Table Full Pagination -->
+                    <div class="block">
+                        <div class="block-header">
+                            <h3 class="block-title">Dynamic Table <small>Full pagination</small></h3>
+                        </div>
+                        <div class="block-content" style="overflow-x:scroll;">
+                            <!-- DataTables init on table by adding .js-dataTable-full-pagination class, functionality initialized in js/pages/base_tables_datatables.js -->
+                            <table class="table table-bordered js-dataTable-full-pagination" id="table">
+                                <thead>
+                                    <tr>
+                                        {% for col in cols %}
+                                            <th class="font-w300 sorting_asc_disabled" style="padding:0 !important;vertical-align:middle;min-width:300px;">
+                                                <input class="form-control contact" style="box-sizing: border-box;width:90%; border:none;" type="text" id="{{ col }}" name="{{ col }}" value="{{ col }}" onblur="LostFocus(this)" />
+                                            </th>
+                                        {% endfor %}
+                                        <th class="font-w300 text-center sorting_asc_disabled" id="add-column" style="cursor:pointer;min-width:100px;padding-left:20px;padding-right:20px;margin-right:40px;" onclick="CreateNewColumn()"><i class="si si-plus" style="width:50%;margin:0 auto;float:none;"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for domain in domains|sort(attribute='created_on') %}
+                                        <tr>
+                                            {% for col in cols %}
+                                                <td class="font-w300" style="padding:0 !important;vertical-align:middle;min-width:300px;">
+                                                    <input class="form-control contact" style="box-sizing: border-box;width:100%; border:none;" type="text" id="col" name="col" value="{{ domain[(col|lower).replace(' ','_')] }}" onblur="LostFocus(this)" />
+                                                </td>
+                                            {% endfor %}
+                                            <td style="display:none" disabled="disabled"></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- END Dynamic Table Full Pagination -->
+                </div>
+                <!-- END Page Content -->
+            </main>
+            <!-- END Main Container -->
+
+            <!-- Footer -->
+            <footer id="page-footer" class="content-mini content-mini-full font-s12 bg-gray-lighter clearfix" style="background-color:#0073ff">
+                <div class="pull-right">
+                    <a href="{{ url_for('user.contact') }}">Contact Us</a> | <a href="{{ url_for('page.privacy') }}">Privacy Policy</a> | <a href="{{ url_for('page.terms') }}">Terms of Service</a>
+                </div>
+                <div class="pull-left">
+                    <a class="font-w600" href="http://goo.gl/6LF10W" target="_blank">OneUI 3.1</a> &copy; <span class="js-year-copy"></span>
+                </div>
+            </footer>
+            <!-- END Footer -->
+        </div>
+        <!-- END Page Container -->
+
+        <!-- Apps Modal -->
+        <!-- Opens from the button in the header -->
+        <div class="modal fade" id="apps-modal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-sm modal-dialog modal-dialog-top">
+                <div class="modal-content">
+                    <!-- Apps Block -->
+                    <div class="block block-themed block-transparent">
+                        <div class="block-header bg-primary-dark">
+                            <ul class="block-options">
+                                <li>
+                                    <button data-dismiss="modal" type="button"><i class="si si-close"></i></button>
+                                </li>
+                            </ul>
+                            <h3 class="block-title">Apps</h3>
+                        </div>
+                        <div class="block-content">
+                            <div class="row text-center">
+                                <div class="col-xs-6">
+                                    <a class="block block-rounded" href="base_pages_dashboard.html">
+                                        <div class="block-content text-white bg-default">
+                                            <i class="si si-speedometer fa-2x"></i>
+                                            <div class="font-w600 push-15-t push-15">Backend</div>
+                                        </div>
+                                    </a>
+                                </div>
+                                <div class="col-xs-6">
+                                    <a class="block block-rounded" href="frontend_home.html">
+                                        <div class="block-content text-white bg-modern">
+                                            <i class="si si-rocket fa-2x"></i>
+                                            <div class="font-w600 push-15-t push-15">Frontend</div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END Apps Block -->
+                </div>
+            </div>
+        </div>
+        <!-- END Apps Modal -->
+
+        <!-- OneUI Core JS: jQuery, Bootstrap, slimScroll, scrollLock, Appear, CountTo, Placeholder, Cookie and App.js -->
+        <script src="../../../../static/oneui/assets/js/core/jquery.min.js"></script>
+        <script src="../../../../static/oneui/assets/js/core/bootstrap.min.js"></script>
+        <script src="../../../../static/oneui/assets/js/core/jquery.slimscroll.min.js"></script>
+        <script src="../../../../static/oneui/assets/js/core/jquery.scrollLock.min.js"></script>
+        <script src="../../../../static/oneui/assets/js/core/jquery.appear.min.js"></script>
+        <script src="../../../../static/oneui/assets/js/core/jquery.countTo.min.js"></script>
+        <script src="../../../../static/oneui/assets/js/core/jquery.placeholder.min.js"></script>
+        <script src="../../../../static/oneui/assets/js/core/js.cookie.min.js"></script>
+        <script src="../../../../static/oneui/assets/js/app.js"></script>
+
+        <!-- Page JS Plugins -->
+        <script src="../../../../static/oneui/assets/js/plugins/datatables/jquery.dataTables.min.js"></script>
+
+        <!-- Page JS Code -->
+        <script src="../../../../static/oneui/assets/js/pages/base_tables_datatables.js"></script>
+
+        <script type="text/javascript">
+            function LostFocus(sel) {
+                //alert(sel.value);
+            }
+        </script>
+        <script type="text/javascript">
+            function CreateNewColumn() {
+
+                // Clone the add button, and delete it
+                var add_column_node = document.getElementById('add-column');
+                var new_add_button = add_column_node.cloneNode(true);
+                add_column_node.remove();
+
+                // add the new column to the table
+                var tbl = document.getElementById('table'), i;
+
+                // Create the header
+                var new_header = CreateHeaderColumn(tbl);
+
+                // open loop for each row and append cell
+                for (i = 1; i < tbl.rows.length; i++) {
+                    createCell(tbl.rows[i].insertCell(tbl.rows[i].cells.length), i, 'col');
+                }
+
+                // readd the new column button
+                tbl.rows[0].appendChild(new_add_button);
+
+                new_add_button.focus();
+                new_header.focus();
+            }
+
+            function createCell(cell, text, style) {
+                var div = document.createElement('div'), // create DIV element
+                    input = document.createElement('input'); // create input element
+
+                // Set the css for the div and input
+                div.style.cssText = "padding:0 !important;vertical-align:middle;min-width:300px;";
+                div.className = 'font-w300';
+
+                input.style.cssText = "box-sizing: border-box;width:100%; border:none;";
+                input.className = 'form-control contact';
+
+                // append the cell and the input to the table
+                div.appendChild(input);                    // append text node to the DIV
+                div.setAttribute('class', style);        // set DIV class attribute
+                div.setAttribute('className', style);    // set DIV class attribute for IE (?!)
+                cell.appendChild(div);                   // append DIV to the table cell
+            }
+
+            function CreateHeaderColumn(tbl){
+                var h = document.createElement('th');
+                h.style.cssText = "padding:0 !important;vertical-align:middle;min-width:300px;";
+                h.className = 'font-w300';
+
+                var input = document.createElement('input');
+                input.style.cssText = "box-sizing: border-box;width:100%; border:none;";
+                input.className = 'form-control contact';
+
+                h.appendChild(input);
+                tbl.rows[0].appendChild(h);
+
+                return input;
+            }
+
+            function FocusAddButton(){
+                var add_column_node = document.getElementById('add-column');
+                add_column_node.focus();
+            }
+        </script>
+    </body>
+</html>
