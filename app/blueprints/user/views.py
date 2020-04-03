@@ -255,11 +255,12 @@ def update_table():
                 row = request.form['row']
                 val = request.form['val']
                 col = request.form['col']
+
                 result = update_row(row, val, col)
                 return jsonify({'result': result})
             except Exception as e:
                 print_traceback(e)
-                return jsonify({'result': False })
+                return jsonify({'result': False})
 
         return redirect(url_for('user.contact'))
     return render_template('user/contact.html', current_user=current_user)

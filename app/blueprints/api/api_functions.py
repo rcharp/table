@@ -10,7 +10,7 @@ from datetime import datetime
 from collections import defaultdict
 from app.extensions import db
 from sqlalchemy import exists, and_, or_, inspect
-from flask import current_app, jsonify
+from flask import current_app, jsonify, make_response
 from importlib import import_module
 from app.blueprints.page.date import get_dt_string
 from flask_login import current_user
@@ -41,10 +41,13 @@ def update_row(id, val, col):
             setattr(d, col, val)
             d.save()
 
+            # return jsonify({"success": 200})
             return True
+        # return jsonify({"error": 500})
         return False
     except Excpetion as e:
         print_traceback(e)
+        # return jsonify({"error": 500})
         return False
 
 
