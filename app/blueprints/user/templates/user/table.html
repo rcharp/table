@@ -315,9 +315,9 @@
                     type: 'POST',
                     data: {'row': row_id, 'col': col_name, 'val': val},
                     success: function (response) {
-                        if ('success' in response){
+                        if ('result' in response && response['result'] === true){
                             document.getElementById('success-message').style.display = '';
-                            setTimeout(HideSuccessMessage(), 5000);
+                            setTimeout(() => {  HideSuccessMessage(); }, 5000);
                         }
                     }
                 });

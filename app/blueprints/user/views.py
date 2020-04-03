@@ -250,23 +250,16 @@ def dashboard():
 def update_table():
     if request.method == 'POST':
         if 'row' in request.form and 'val' in request.form and 'col' in request.form:
-
             try:
-                id = request.form['row']
+                from app.blueprints.api.api_functions import update_row
+                row = request.form['row']
                 val = request.form['val']
                 col = request.form['col']
-
-                # Get the corresponding item from the table
-                d = Domain.query.filter(Domain.id == id).scalar()
-
-                # If the value has been changed, then update the table
-                if getattr(d, col) != val:
-                    setattr(d, col, val)
-                    d.save()
-
-                    return jsonify({'success': 200})
+                result = update_row(row, val, col)
+                return jsonify({'result': result})
             except Exception as e:
-                return jsonify({'error': 500 })
+                print_traceback(e)
+                return jsonify({'result': False })
 
         return redirect(url_for('user.contact'))
     return render_template('user/contact.html', current_user=current_user)

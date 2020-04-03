@@ -10,7 +10,7 @@ from datetime import datetime
 from collections import defaultdict
 from app.extensions import db
 from sqlalchemy import exists, and_, or_, inspect
-from flask import current_app
+from flask import current_app, jsonify
 from importlib import import_module
 from app.blueprints.page.date import get_dt_string
 from flask_login import current_user
@@ -27,6 +27,25 @@ def generate_id(size=12, chars=string.digits):
 def print_traceback(e):
     traceback.print_tb(e.__traceback__)
     print(e)
+
+
+def update_row(id, val, col):
+    try:
+
+        # Get the corresponding item from the table
+        from app.blueprints.api.models.domains import Domain
+        d = Domain.query.filter(Domain.id == id).scalar()
+
+        # If the value has been changed, then update the table
+        if getattr(d, col) != val:
+            setattr(d, col, val)
+            d.save()
+
+            return True
+        return False
+    except Excpetion as e:
+        print_traceback(e)
+        return False
 
 
 def get_col_types():
