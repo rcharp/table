@@ -48,6 +48,7 @@ from app.blueprints.billing.charge import (
     get_card
 )
 from app.blueprints.api.api_functions import print_traceback
+from app.blueprints.api.models.domains import Domain
 
 user = Blueprint('user', __name__, template_folder='templates')
 
@@ -231,21 +232,44 @@ def dashboard():
         return redirect(url_for('admin.dashboard'))
 
     from app.blueprints.api.models.domains import Domain as d
+    from app.blueprints.api.api_functions import get_col_types
 
     inst = inspect(d)
     # cols = [{'name': '#'}]
     cols = [{'name': c_attr.key} for c_attr in inst.mapper.column_attrs]
     table_name = d.__table__.name
-    types = [{'name': 'Text', 'type': 'text'},
-             {'name': 'Email', 'type': 'email'},
-             {'name': 'Date', 'type': 'date'},
-             {'name': 'Phone Number', 'type': 'phone'},
-             {'name': 'URL', 'type': 'url'},
-             {'name': 'Currency', 'type': 'currency'},
-             {'name': 'Percent', 'type': 'percent'}]
+    types = get_col_types()
 
     domains = d.query.all()
     return render_template('user/table.html', current_user=current_user, cols=cols, rows=domains, table_name=table_name, types=types)
+
+
+# Actions -------------------------------------------------------------------
+@user.route('/update_table', methods=['GET','POST'])
+@csrf.exempt
+def update_table():
+    if request.method == 'POST':
+        if 'row' in request.form and 'val' in request.form and 'col' in request.form:
+
+            try:
+                id = request.form['row']
+                val = request.form['val']
+                col = request.form['col']
+
+                # Get the corresponding item from the table
+                d = Domain.query.filter(Domain.id == id).scalar()
+
+                # If the value has been changed, then update the table
+                if getattr(d, col) != val:
+                    setattr(d, col, val)
+                    d.save()
+
+                    return jsonify({'success': 200})
+            except Exception as e:
+                return jsonify({'error': 500 })
+
+        return redirect(url_for('user.contact'))
+    return render_template('user/contact.html', current_user=current_user)
 
 
 # Settings -------------------------------------------------------------------

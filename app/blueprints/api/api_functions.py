@@ -27,3 +27,14 @@ def generate_id(size=12, chars=string.digits):
 def print_traceback(e):
     traceback.print_tb(e.__traceback__)
     print(e)
+
+
+def get_col_types():
+    return [{'name': 'Text', 'type': 'text'},
+             {'name': 'Email', 'type': 'email'},
+             {'name': 'Boolean', 'type': 'boolean'},
+             {'name': 'Date', 'type': 'date'},
+             {'name': 'Phone Number', 'type': 'phone'},
+             {'name': 'URL', 'type': 'url'},
+             {'name': 'Currency', 'type': 'currency'},
+             {'name': 'Percent', 'type': 'percent'}]

@@ -21,8 +21,10 @@ var BaseTableDatatables = function() {
             pagingType: "full_numbers",
             columnDefs: [ { orderable: true, targets: [ 4 ] } ],
             searching: true,
+            sorting: false,
             pageLength: 100,
             slengthMenu: [[5, 10, 15, 20, 50, 100], [5, 10, 15, 20, 50, 100]]
+            //sortable: false
         });
     };
 
@@ -33,6 +35,7 @@ var BaseTableDatatables = function() {
             pageLength: 10,
             lengthMenu: [[5, 10, 15, 20], [5, 10, 15, 20]],
             searching: false,
+            sorting: false,
             oLanguage: {
                 sLengthMenu: ""
             },
