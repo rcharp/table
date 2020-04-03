@@ -233,11 +233,19 @@ def dashboard():
     from app.blueprints.api.models.domains import Domain as d
 
     inst = inspect(d)
-    cols = [c_attr.key.replace('_', ' ').title() for c_attr in inst.mapper.column_attrs]
+    # cols = [{'name': '#'}]
+    cols = [{'name': c_attr.key} for c_attr in inst.mapper.column_attrs]
     table_name = d.__table__.name
+    types = [{'name': 'Text', 'type': 'text'},
+             {'name': 'Email', 'type': 'email'},
+             {'name': 'Date', 'type': 'date'},
+             {'name': 'Phone Number', 'type': 'phone'},
+             {'name': 'URL', 'type': 'url'},
+             {'name': 'Currency', 'type': 'currency'},
+             {'name': 'Percent', 'type': 'percent'}]
 
     domains = d.query.all()
-    return render_template('user/table.html', current_user=current_user, cols=cols, domains=domains, table_name=table_name)
+    return render_template('user/table.html', current_user=current_user, cols=cols, rows=domains, table_name=table_name, types=types)
 
 
 # Settings -------------------------------------------------------------------

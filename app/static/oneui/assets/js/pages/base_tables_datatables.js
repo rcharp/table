@@ -19,10 +19,10 @@ var BaseTableDatatables = function() {
     var initDataTableFullPagination = function() {
         jQuery('.js-dataTable-full-pagination').dataTable({
             pagingType: "full_numbers",
-            columnDefs: [ { orderable: false, targets: [ 4 ] } ],
-            searching: false,
-            pageLength: 20,
-            lengthMenu: [[5, 10, 15, 20, 50, 100], [5, 10, 15, 20, 50, 100]]
+            columnDefs: [ { orderable: true, targets: [ 4 ] } ],
+            searching: true,
+            pageLength: 100,
+            slengthMenu: [[5, 10, 15, 20, 50, 100], [5, 10, 15, 20, 50, 100]]
         });
     };
 
@@ -49,13 +49,14 @@ var BaseTableDatatables = function() {
         // Set the defaults for DataTables init
         jQuery.extend( true, $DataTable.defaults, {
             dom:
-                "<'row'<'col-sm-6'l><'col-sm-6'f>>" +
+                // Commenting this out hides the table length picker at the top
+                //"<'row'<'col-sm-6'l><'col-sm-6'f>>" +
                 "<'row'<'col-sm-12'tr>>" +
                 "<'row'<'col-sm-6'i><'col-sm-6'p>>",
             renderer: 'bootstrap',
             oLanguage: {
                 sLengthMenu: "_MENU_",
-                sInfo: "Showing <strong>_START_</strong>-<strong>_END_</strong> of <strong>_TOTAL_</strong>",
+                sInfo: "Showing <strong>_START_</strong>-<strong>_END_</strong> of <strong>_TOTAL_</strong> rows",
                 oPaginate: {
                     sPrevious: '<i class="fa fa-angle-left"></i>',
                     sNext: '<i class="fa fa-angle-right"></i>'
