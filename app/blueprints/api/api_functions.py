@@ -17,16 +17,17 @@ from flask_login import current_user
 
 
 # Create a distinct integration id for the integration.
-def generate_id(size=12, chars=string.digits):
-    # Generate a random 12-character user id
-    new_id = int(''.join(random.choice(chars) for _ in range(size)))
+def generate_id(size=7, chars=string.digits):
+    # Generate a random 7-character user id
+    id = int(''.join(random.choice(chars) for _ in range(size)))
 
-    return new_id
+    from app.blueprints.api.models.domains import Domain
 
-
-def print_traceback(e):
-    traceback.print_tb(e.__traceback__)
-    print(e)
+    # Check to make sure there isn't already that id in the database
+    if not db.session.query(exists().where(Domain.id == id)).scalar():
+        return id
+    else:
+        generate_id()
 
 
 def update_row(id, val, col):
@@ -34,21 +35,34 @@ def update_row(id, val, col):
 
         # Get the corresponding item from the table
         from app.blueprints.api.models.domains import Domain
-        d = Domain.query.filter(Domain.id == id).scalar()
 
-        # If the value has been changed, then update the table
-        if getattr(d, col) != val:
-            setattr(d, col, val)
+        if not db.session.query(exists().where(Domain.id == id)).scalar():
+            d = Domain()
+            d.id = id
             d.save()
 
-            # return jsonify({"success": 200})
             return True
-        # return jsonify({"error": 500})
+        else:
+            d = Domain.query.filter(Domain.id == id).scalar()
+
+            # If the value has been changed, then update the table
+            if getattr(d, col) != val:
+                setattr(d, col, val)
+                d.save()
+
+                return True
         return False
-    except Excpetion as e:
+    except Exception as e:
         print_traceback(e)
-        # return jsonify({"error": 500})
         return False
+
+
+def delete_rows(rows):
+    from app.blueprints.api.models.domains import Domain
+    for row in rows:
+        d = Domain.query.filter(Domain.id == row).scalar()
+        d.delete()
+    return True
 
 
 def get_col_types():
@@ -60,3 +74,8 @@ def get_col_types():
              {'name': 'URL', 'type': 'url'},
              {'name': 'Currency', 'type': 'currency'},
              {'name': 'Percent', 'type': 'percent'}]
+
+
+def print_traceback(e):
+    traceback.print_tb(e.__traceback__)
+    print(e)

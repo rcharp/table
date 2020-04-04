@@ -165,16 +165,22 @@
                     <!-- Dynamic Table Full Pagination -->
                     <div class="block">
                         <div class="block-content" style="padding-left:0;">
-                            <span id="success-message" style="margin-left:10px;display:none;color:green;font-size:14px;">Table updated successfully.</span>
+                            <span id="success-message" style="margin-left:10px;visibility:hidden;color:green;font-size:14px;">Table updated successfully.</span><br /><br />
+                            <span id="delete-selected" class="font-w300" style="cursor:pointer;margin-left:15px;margin-bottom:10px;visibility:hidden;color:red; border:1px solid red;border-radius:4px;padding:10px;" onclick="DeleteRows()"><i class="fa fa-trash-o" style="margin-right:10px;"></i>Delete <span id="selected_rows">0</span> selected row(s)</span><br /><br />
                             <!-- DataTables init on table by adding .js-dataTable-full-pagination class, functionality initialized in js/pages/base_tables_datatables.js -->
-                            <table class="table table-bordered js-dataTable-full-pagination dataTable" id="table">
+                            <table class="table table-bordered js-dataTable-full-pagination js-table-checkable dataTable" id="table">
                                 <thead>
                                     <tr>
                                         {% for col in cols %}
                                             <th class="font-w300 sorting_disabled" {% if loop.first %}aria-controls="disabled" aria-sort="none"{% endif %} style="background-color:white;vertical-align:middle;width:300px;text-transform:none;{% if loop.first %}padding:0 0 0 10px;position:sticky;left:0;z-index:700;{% else %}padding:0; !important;{% endif %}">
                                                 <div class="form-group" style="width:100%;margin-bottom:0">
                                                     <div class="input-group" style="width:100%;">
-                                                        <input class="form-control contact" style="box-sizing: border-box;width:90%; border:none;" type="text" id="{{ col['name'] }}" name="{{ col['name'] }}" value="{{ col['name']|column_filter }}" onblur="UpdateTable(this);" />
+                                                        {% if loop.first %}
+                                                        <label class="css-input css-checkbox css-checkbox-primary" style="float:left; margin-left:10px;">
+                                                            <input type="checkbox" id="select-all" name="select-all" style="border-right:1px solid #d3d3d3;margin-right:10px;" onchange="SelectAll(this);"><span></span>
+                                                        </label>
+                                                        {% endif %}
+                                                        <input class="form-control contact" style="box-sizing: border-box;{% if loop.first %}width:70%;{% else %}width:90%;{% endif %} border:none;" type="text" id="{{ col['name'] }}" name="{{ col['name'] }}" value="{{ col['name']|column_filter }}" onblur="UpdateTable(this);" />
                                                             <div class="input-group-btn text-center">
                                                             <button class="btn btn-default" data-toggle="dropdown" type="button" aria-expanded="false"><span class="caret"></span></button>
                                                             <ul class="dropdown-menu dropdown-menu-right" style="min-width:250px;">
@@ -199,17 +205,22 @@
                                 </thead>
                                 <tbody id="table-body">
                                     {% for row in rows|sort(attribute='created_on') %}
-                                        <tr id="{{ row['id'] }}">
+                                        <tr id="row_{{ row['id'] }}">
                                             {% for col in cols %}
                                                 <td class="font-w300" style="background-color:white;vertical-align:middle;min-width:300px;{% if loop.first %}padding:0 0 0 10px;position:sticky;left:0;z-index:700;{% else %}padding:0; !important;{% endif %}">
-                                                    <input class="form-control contact" style="box-sizing: border-box;width:100%; border:none;" type="text" id="{{ row['id'] }}" name="{{ col['name'] }}" value="{{ row[col['name']] }}" onblur="return UpdateTable(this);" />
+                                                    {% if loop.first %}
+                                                        <label class="css-input css-checkbox css-checkbox-primary" style="margin-left:10px;">
+                                                            <input type="checkbox" class="select-box" id="{{ row['id'] }}" name="{{ row['id'] }}_select" style="border-right:1px solid #d3d3d3;margin-right:10px;" onchange="RowSelected()"><span></span>
+                                                        </label>
+                                                    {% endif %}
+                                                    <input class="form-control contact" style="box-sizing: border-box;{% if loop.first %}width:80%;{% else %}width:100%;{% endif %} border:none;" type="text" id="{{ row['id'] }}" name="{{ col['name'] }}" value="{{ row[col['name']] }}" onblur="return UpdateTable(this);" />
                                                 </td>
                                             {% endfor %}
                                             <td style="display:none" disabled="disabled"></td>
                                         </tr>
                                     {% endfor %}
                                         <!-- Add a blank row at the bottom -->
-                                        <tr>
+                                        <tr id="row_{{ new_row_id }}">
                                             {% for col in cols %}
                                                 <td class="font-w300" style="background-color:white;vertical-align:middle;min-width:300px;{% if loop.first %}padding:0 0 0 10px;position:sticky;left:0;z-index:700;{% else %}padding:0; !important;{% endif %}">
                                                     {% if loop.first %}
@@ -316,7 +327,9 @@
                     data: {'row': row_id, 'col': col_name, 'val': val},
                     success: function (response) {
                         if ('result' in response && response['result'] === true){
-                            document.getElementById('success-message').style.display = '';
+                            var message = document.getElementById('success-message');
+                            message.innerText = 'Table updated successfully.';
+                            message.style.visibility = 'visible';
                             setTimeout(() => {  HideSuccessMessage(); }, 4000);
                         }
                     }
@@ -328,10 +341,39 @@
                 var tbl = document.getElementById('table');
                 var rows = tbl.rows;
                 var last_row = rows[rows.length - 1];
+                var second_last_row = rows[rows.length - 2].cells[0];
                 var new_row = last_row.cloneNode(true);
 
+                // remove the 'new' button from the former last row
+                // and clone it from the one before it
                 last_row.getElementsByTagName('i')[0].remove();
-                last_row.getElementsByTagName('input')[0].style.width = '100%';
+                last_row.cells[0].innerHTML = second_last_row.innerHTML;
+
+                // Set the former last row's value to null
+                last_row.cells[0].getElementsByTagName('input')[1].value = '';
+
+                //last_row.getElementsByTagName('input')[0].style.width = '100%';
+
+                // Generate an ID for the new row
+                $.ajax({
+                    url: '{{ url_for("user.new_row_id") }}',
+                    type: 'GET',
+                    success: function (response) {
+                        if ('result' in response && response['result'] !== null){
+                            new_row.id = 'row_' + response['result'];
+
+                            // Save the new row to the DB
+                            $.ajax({
+                                url: '{{ url_for("user.save_new_row") }}',
+                                type: 'POST',
+                                data: {'row-id': response['result']},
+                                success: function (response) {
+                                }
+                            });
+                        }
+                    }
+                });
+
                 document.getElementById('table-body').appendChild(new_row);
             }
         </script>
@@ -404,7 +446,68 @@
             }
 
             function HideSuccessMessage() {
-                document.getElementById('success-message').style.display = 'none';
+                document.getElementById('success-message').style.visibility = 'hidden';
+            }
+
+            function SelectAll(sel) {
+                var checkboxes = document.getElementsByClassName('select-box');
+                if (sel.checked){
+                    for(var i = 0; i < checkboxes.length; i++){
+                        checkboxes[i].checked = true;
+                    }
+
+                    // Show the delete selected button
+                    document.getElementById('selected_rows').innerText = document.querySelectorAll('input[class=select-box]:checked').length;
+                    document.getElementById('delete-selected').style.visibility = 'visible';
+                }
+                else{
+                    for(var i = 0; i < checkboxes.length; i++){
+                        checkboxes[i].checked = false;
+                    }
+
+                    // Hide the delete selected button
+                    document.getElementById('delete-selected').style.visibility = 'hidden';
+                }
+            }
+
+            function RowSelected() {
+                var checkboxes = document.getElementsByClassName('select-box');
+                var box_selected = false;
+                for(var i = 0; i < checkboxes.length; i++){
+                    if (checkboxes[i].checked === true){
+                        box_selected = true;
+                    }
+                }
+
+                if (box_selected){
+                    document.getElementById('selected_rows').innerText = document.querySelectorAll('input[class=select-box]:checked').length;
+                    document.getElementById('delete-selected').style.visibility = 'visible';
+                }
+                else {
+                    document.getElementById('delete-selected').style.visibility = 'hidden';
+                }
+            }
+
+            function DeleteRows(){
+                var checkedBoxes = [].slice.call(document.querySelectorAll('input[class=select-box]:checked'));
+                var count = checkedBoxes.length;
+
+                var rows_to_delete = [];
+                for (var i = 0; i < count; i++){
+                    rows_to_delete.push(checkedBoxes[i].id);
+                }
+
+                if (confirm("Are you sure you want to delete " + count + " rows? This can't be undone.")){
+                    // Delete the rows
+                    $.ajax({
+                        url: '{{ url_for("user.delete_rows") }}',
+                        type: 'POST',
+                        data: {'rows': JSON.stringify(rows_to_delete)},
+                        success: function (response) {
+                            window.location.href='{{ url_for('user.dashboard') }}';
+                        }
+                    });
+                }
             }
         </script>
     </body>

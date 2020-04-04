@@ -232,16 +232,22 @@ def dashboard():
         return redirect(url_for('admin.dashboard'))
 
     from app.blueprints.api.models.domains import Domain as d
-    from app.blueprints.api.api_functions import get_col_types
+    from app.blueprints.api.api_functions import get_col_types, generate_id
 
     inst = inspect(d)
-    # cols = [{'name': '#'}]
+    # cols = [{'name': 'select', 'val': False}]
     cols = [{'name': c_attr.key} for c_attr in inst.mapper.column_attrs]
     table_name = d.__table__.name
     types = get_col_types()
+    row_id = generate_id()
 
     domains = d.query.all()
-    return render_template('user/table.html', current_user=current_user, cols=cols, rows=domains, table_name=table_name, types=types)
+    return render_template('user/table.html', current_user=current_user,
+                           cols=cols,
+                           rows=domains,
+                           table_name=table_name,
+                           types=types,
+                           new_row_id=row_id)
 
 
 # Actions -------------------------------------------------------------------
@@ -262,8 +268,42 @@ def update_table():
                 print_traceback(e)
                 return jsonify({'result': False})
 
-        return redirect(url_for('user.contact'))
-    return render_template('user/contact.html', current_user=current_user)
+        return redirect(url_for('user.dashboard'))
+    return render_template('user/dashboard.html', current_user=current_user)
+
+
+@user.route('/save_new_row', methods=['GET','POST'])
+@csrf.exempt
+def save_new_row():
+    if request.method == 'POST':
+        if 'row-id' in request.form:
+            id = request.form['row-id']
+            from app.blueprints.api.api_functions import update_row
+            result = update_row(id, None, None)
+            return jsonify({'result': result})
+    return redirect(url_for('user.dashboard'))
+
+
+@user.route('/delete_rows', methods=['GET','POST'])
+@csrf.exempt
+def delete_rows():
+    if request.method == 'POST':
+        print(request.form)
+        if 'rows' in request.form:
+            rows = json.loads(request.form['rows'])
+
+            from app.blueprints.api.api_functions import delete_rows
+            result = delete_rows(rows)
+            return jsonify({'result': result})
+    return redirect(url_for('user.dashboard'))
+
+
+@user.route('/new_row_id', methods=['GET','POST'])
+@csrf.exempt
+def new_row_id():
+    from app.blueprints.api.api_functions import generate_id
+    id = generate_id()
+    return jsonify({'result': id})
 
 
 # Settings -------------------------------------------------------------------
