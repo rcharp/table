@@ -232,19 +232,30 @@ def dashboard():
         return redirect(url_for('admin.dashboard'))
 
     from app.blueprints.api.models.domains import Domain as d
-    from app.blueprints.api.api_functions import get_col_types, generate_id
+    from app.blueprints.api.models.searched import SearchedDomain as s
+    from app.blueprints.api.api_functions import get_col_types, generate_id, get_rows, get_columns
 
-    inst = inspect(d)
-    # cols = [{'name': 'select', 'val': False}]
-    cols = [{'name': c_attr.key} for c_attr in inst.mapper.column_attrs]
-    table_name = d.__table__.name
+    # Which table are we using?
+    table = d
+
+    rows = get_rows(table)
+    cols = get_columns(table)
+
     types = get_col_types()
     row_id = generate_id()
+    table_name = table.__table__.name
 
-    domains = d.query.all()
-    return render_template('user/table.html', current_user=current_user,
+    p = 'none'
+    if p == 'col':
+        for col in cols:
+            print(col)
+    elif p == 'row':
+        for row in rows:
+            print(row)
+
+    return render_template('user/jtable.html', current_user=current_user,
                            cols=cols,
-                           rows=domains,
+                           rows=rows,
                            table_name=table_name,
                            types=types,
                            new_row_id=row_id)
@@ -288,11 +299,23 @@ def save_new_row():
 @csrf.exempt
 def delete_rows():
     if request.method == 'POST':
-        print(request.form)
         if 'rows' in request.form:
             rows = json.loads(request.form['rows'])
 
             from app.blueprints.api.api_functions import delete_rows
+            result = delete_rows(rows)
+            return jsonify({'result': result})
+    return redirect(url_for('user.dashboard'))
+
+
+@user.route('/delete_column', methods=['GET','POST'])
+@csrf.exempt
+def delete_column():
+    if request.method == 'POST':
+        if 'col' in request.form:
+            col = json.loads(request.form['col'])
+
+            from app.blueprints.api.api_functions import delete_column
             result = delete_rows(rows)
             return jsonify({'result': result})
     return redirect(url_for('user.dashboard'))

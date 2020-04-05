@@ -56,6 +56,10 @@ def is_date(string, fuzzy=False):
         return False
 
 
+def is_datetime(d):
+    return isinstance(d, datetime.date) or isinstance(d, dtime)
+
+
 def get_creation_date(path_to_file):
     """
     Try to get the date that a file was created, falling back to when it was
@@ -112,6 +116,10 @@ def convert_string_dates(date_string):
 
 def convert_datetime_to_available(dt):
     return '{0}/{1}/{2:02}'.format(dt.month, dt.day, dt.year)
+
+
+def format_datetime(dt):
+    return '{0:02}/{1:02}/{2:02}'.format(dt.month, dt.day, dt.year)
 
 
 def get_string_from_datetime(dt):
