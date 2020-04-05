@@ -345,7 +345,6 @@
             var rows = JSON.parse('{{ rows | tojson }}');
             var columns = JSON.parse('{{ cols | tojson }}');
             var changed = function(instance, cell, x, y, value) {
-
                 // The row has been selected
                 if(x === '0'){
                     RowSelected();
@@ -394,6 +393,8 @@
 
                 StyleCheckBoxes(table);
                 CreateNewRowButton(table);
+
+                StyleSelectBoxes();
             }
 
             function StyleLastRow(){
@@ -426,6 +427,22 @@
                     wrapper.appendChild(checkBoxes[i]);
                     wrapper.appendChild(document.createElement('span'));
                     wrapper.parentElement.classList += ' text-center';
+                }
+            }
+
+            function StyleSelectBoxes(){
+                var rows = document.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+                var select_boxes = [];
+                for (var i = 0; i< rows.length; i++){
+                    select_boxes.push(table.records[i][0].childNodes[0].getElementsByTagName('input')[0]);
+                }
+
+                // remove the last element, since it's the plus button
+                select_boxes.pop();
+
+                // set the class on the select boxes
+                for (var i = 0; i< select_boxes.length; i++){
+                    select_boxes[i].classList += 'select-box';
                 }
             }
         </script>
@@ -545,12 +562,21 @@
             }
 
             function DeleteRows(){
+
+                // Get the rows to be deleted
                 var checkedBoxes = [].slice.call(document.querySelectorAll('input[class=select-box]:checked'));
                 var count = checkedBoxes.length;
-
                 var rows_to_delete = [];
+
+                // We need to know which column the row's id is in, to delete it
+                var idColumnIndex = GetIdColumnIndex();
+
                 for (var i = 0; i < count; i++){
-                    rows_to_delete.push(checkedBoxes[i].id);
+                    var rowIndex = checkedBoxes[i].parentNode.parentNode.parentNode.rowIndex;
+
+                    // Get the row item's id
+                    var item_id = document.getElementsByTagName('table')[0].rows[rowIndex].cells[idColumnIndex].innerText;
+                    rows_to_delete.push(item_id);
                 }
 
                 if (confirm("Are you sure you want to delete " + count + " rows? This can't be undone.")){
@@ -560,10 +586,19 @@
                         type: 'POST',
                         data: {'rows': JSON.stringify(rows_to_delete)},
                         success: function (response) {
-                            window.location.href='{{ url_for('user.dashboard') }}';
+                            var message = document.getElementById('success-message');
+                            message.innerText = count + ' rows have been deleted successfully.';
+                            message.style.visibility = 'visible';
+                            message.focus();
+                            setTimeout(() => {  Refresh(); }, 1500);
+
                         }
                     });
                 }
+            }
+
+            function Refresh(){
+                window.location.href='{{ url_for('user.dashboard') }}';
             }
 
             function DeleteColumn(sel, col_name){
