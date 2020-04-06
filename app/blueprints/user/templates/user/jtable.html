@@ -131,17 +131,17 @@
                     </li>
                     <li>
                         <!-- Opens the Apps modal found at the bottom of the page, before including JS code -->
-                        <button class="btn btn-default pull-right" data-toggle="modal" data-target="#apps-modal" type="button">
-                            <i class="si si-grid"></i>
+                        <button class="btn btn-default pull-right" type="button" onclick="window.location.href='#success-message'">
+                            <i class="fa fa-angle-up"></i>&nbsp;&nbsp;<span class="font-w300">Back to Top</span>
                         </button>
                     </li>
                     <li class="visible-xs">
                         <!-- Toggle class helper (for .js-header-search below), functionality initialized in App() -> uiToggleClass() -->
-                        <button class="btn btn-default" data-toggle="class-toggle" data-target=".js-header-search" data-class="header-search-xs-visible" type="button">
+                        <button class="btn btn-default" style="display:none" data-toggle="class-toggle" data-target=".js-header-search" data-class="header-search-xs-visible" type="button">
                             <i class="fa fa-search"></i>
                         </button>
                     </li>
-                    <li class="js-header-search header-search">
+                    <li class="js-header-search header-search" style="display:none">
                         <form class="form-horizontal" action="base_pages_search.html" method="post">
                             <div class="form-material form-material-primary input-group remove-margin-t remove-margin-b">
                                 <input class="form-control" type="text" id="base-material-text" name="base-material-text" placeholder="Search..">
@@ -181,83 +181,11 @@
                         <div class="block-content" style="padding-left:0;">
                             <span id="success-message" style="margin-left:10px;visibility:hidden;color:green;font-size:14px;">Table updated successfully.</span><br /><br />
                             <span id="delete-selected" class="font-w300" style="cursor:pointer;margin-left:15px;margin-bottom:10px;visibility:hidden;color:red; border:1px solid red;border-radius:4px;padding:10px;" onclick="DeleteRows()"><i class="fa fa-trash-o" style="margin-right:10px;"></i>Delete <span id="selected_rows">0</span> selected row(s)</span><br /><br />
-
-                            <div id="jtable-wrapper" style="overflow-x:scroll">
-                                <div id="jtable"></div>
+                            <div id="jtable-wrapper" name="wrapper" style="overflow-x:scroll">
+                                <div id="jtable" style="position:relative">
+                                    <div id="AddColumnButton" tabindex="1"></div>
+                                </div>
                             </div>
-
-                            <!-- DataTables init on table by adding .js-dataTable-full-pagination class, functionality initialized in js/pages/base_tables_datatables.js -->
-                            {#<table class="table table-bordered js-dataTable-full-pagination js-table-checkable dataTable" id="table"><br /><br />
-                                <thead>
-                                    <tr>
-                                        {% for col in cols %}
-                                            <th class="font-w300 sorting_disabled" {% if loop.first %}aria-controls="disabled" aria-sort="none"{% endif %} style="background-color:white;vertical-align:middle;width:300px;text-transform:none;{% if loop.first %}padding:0 0 0 10px;position:sticky;left:0;z-index:700;{% else %}padding:0; !important;{% endif %}">
-                                                <div class="form-group" style="width:100%;margin-bottom:0">
-                                                    <div class="input-group" style="width:100%;">
-                                                        {% if loop.first %}
-                                                        <label class="css-input css-checkbox css-checkbox-primary" style="float:left; margin-left:10px;">
-                                                            <input type="checkbox" id="select-all" name="select-all" style="border-right:1px solid #d3d3d3;margin-right:10px;" onchange="SelectAll(this);"><span></span>
-                                                        </label>
-                                                        {% endif %}
-                                                        <input class="form-control contact" style="box-sizing: border-box;{% if loop.first %}width:70%;{% else %}width:90%;{% endif %} border:none;" type="text" id="{{ col['title'] }}" name="{{ col['type'] }}" value="{{ col['title']|column_filter }}" onblur="UpdateTable(this);" />
-                                                            <div class="input-group-btn text-center">
-                                                            <button class="btn btn-default" data-toggle="dropdown" type="button" aria-expanded="false"><span class="caret"></span></button>
-                                                            <ul class="dropdown-menu dropdown-menu-right" style="min-width:250px;">
-                                                                <li style="padding:10px;"><span class="font-w300">Field Type</span></li>
-                                                                <li class="divider"></li>
-                                                                {% for type in types %}
-                                                                    <li style="cursor:pointer;padding:10px;position:sticky;z-index:700;{% if col['type'] == type['type'] %}border:1px solid #d3d3d3;border-radius:4px;background-color:#f5f5f5{% endif %}" onclick="SetColumnType('{{ col["name"] }}', '{{ type['type'] }}');">
-                                                                        <span class="font-w300">{{ type['name'] }}</span>
-                                                                    </li>
-                                                                {% endfor %}
-                                                                <li style="cursor:pointer;padding:10px;position:sticky;z-index:700;display:none" onclick="DeleteColumn(this, '{{ col['title'] }}');">
-                                                                    <span class="font-w300" style="color:red"><i class="fa fa-trash-o" style="margin-right:10px;"></i>Delete column</span>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </th>
-                                        {% endfor %}
-                                        <th class="font-w300 text-center sorting_asc_disabled sorting_desc_disabled" id="add-column" style="cursor:pointer;min-width:100px;padding-left:20px;padding-right:20px;margin-right:40px;" onclick="CreateNewColumn()"><i class="si si-plus" style="width:50%;margin:0 auto;float:none;"></i></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table-body">
-                                    {% for row in rows|sort(attribute='created_on') %}
-                                        <tr id="row_{{ row['id'] }}">
-                                            {% for col in cols %}
-                                                <td class="font-w300" style="background-color:white;vertical-align:middle;min-width:300px;{% if loop.first %}padding:0 0 0 10px;position:sticky;left:0;z-index:700;{% else %}padding:0; !important;{% endif %}">
-                                                    {% if loop.first %}
-                                                        <label class="css-input css-checkbox css-checkbox-primary" style="margin-left:10px;">
-                                                            <input type="checkbox" class="select-box" id="{{ row['id'] }}" name="{{ row['id'] }}_select" style="border-right:1px solid #d3d3d3;margin-right:10px;" onchange="RowSelected()"><span></span>
-                                                        </label>
-                                                    {% endif %}
-                                                    <input class="form-control contact" style="box-sizing: border-box;{% if loop.first %}width:80%;{% else %}width:100%;{% endif %} border:none;" type="text" id="{{ row['id'] }}" name="{{ col['title'] }}" value="{{ row[col['title']] }}" onblur="return UpdateTable(this);" />
-                                                </td>
-                                            {% endfor %}
-                                            <td style="display:none" disabled="disabled"></td>
-                                        </tr>
-                                    {% endfor %}
-                                        <!-- Add a blank row at the bottom -->
-                                        <tr id="row_{{ new_row_id }}">
-                                            {% for col in cols %}
-                                                <td class="font-w300" style="background-color:white;vertical-align:middle;min-width:300px;{% if loop.first %}padding:0 0 0 10px;position:sticky;left:0;z-index:700;{% else %}padding:0; !important;{% endif %}">
-                                                    {% if loop.first %}
-                                                        <i class="si si-plus" style="padding-left:10px;cursor:pointer;" onclick="AddRow();"></i>
-                                                        <input class="form-control contact" style="box-sizing: border-box;width:80%; border:none;" type="text" id="" name="" value="" onblur="UpdateTable(this);" />
-                                                    {% else %}
-                                                        <input class="form-control contact" style="box-sizing: border-box;width:100%; border:none;" type="text" id="" name="" value="" onblur="UpdateTable(this);" />
-                                                    {% endif %}
-                                                </td>
-                                            {% endfor %}
-                                            <td style="display:none" disabled="disabled"></td>
-                                        </tr>
-                                </tbody>
-                                <script>
-                                    document.getElementsByClassName('col-sm-12')[0].style.cssText = "overflow-x:scroll;min-height:600px;";
-                                    document.getElementById('table_info').style.cssText = "padding-left:10px;";
-                                </script>
-                            </table>#}
                         </div>
                     </div>
                     <!-- END Dynamic Table Full Pagination -->
@@ -281,41 +209,61 @@
 
         <!-- Apps Modal -->
         <!-- Opens from the button in the header -->
-        <div class="modal fade" id="apps-modal" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-sm modal-dialog modal-dialog-top">
+        <div class="modal in" id="modal-normal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" style="width:500px;height:200px;">
                 <div class="modal-content">
-                    <!-- Apps Block -->
-                    <div class="block block-themed block-transparent">
-                        <div class="block-header bg-primary-dark">
-                            <ul class="block-options">
-                                <li>
-                                    <button data-dismiss="modal" type="button"><i class="si si-close"></i></button>
-                                </li>
-                            </ul>
-                            <h3 class="block-title">Apps</h3>
-                        </div>
-                        <div class="block-content">
-                            <div class="row text-center">
-                                <div class="col-xs-6">
-                                    <a class="block block-rounded" href="base_pages_dashboard.html">
-                                        <div class="block-content text-white bg-default">
-                                            <i class="si si-speedometer fa-2x"></i>
-                                            <div class="font-w600 push-15-t push-15">Backend</div>
+                    <form class="form-horizontal push-5-t" action="{{ url_for('user.update_column' ) }}" method="post">
+                        <div class="block block-themed block-transparent remove-margin-b">
+                            <div class="block-header bg-primary-dark">
+                                <ul class="block-options">
+                                    <li>
+                                        <button data-dismiss="modal" type="button"><i class="si si-close"></i></button>
+                                    </li>
+                                </ul>
+                                <h3 class="block-title">Update Column</h3>
+                            </div>
+                            <div class="block-content">
+                                <div class="form-group" style="width:60%;margin-bottom:0">
+                                    <div class="input-group">
+                                        <label for="column_name">Column Name</label>
+                                        <input required class="form-control contact" autofocus style="box-sizing: border-box;width:100%; border:1px solid #d3d3d3;" type="text" id="column_name" name="column_name" value="" onblur="" />
+                                        <input required type="hidden" id="old_column_name" name="old_column_name" value="" />
+                                        <input required type="hidden" id="table_name" name="table_name" value="{{ table_name }}" />
+                                    </div>
+                                    <br /><br />
+                                    <label for="column_type">Column Type</label>
+                                    <div class="input-group">
+                                        <input required readonly class="form-control contact" style="margin-right:0;box-sizing: border-box;width:100%; border:1px solid #d3d3d3;" type="text" id="column_type" name="" value="" onblur="" />
+                                        <div class="input-group-btn text-center">
+                                            <button class="btn btn-default" data-toggle="dropdown" type="button" aria-expanded="false"><span class="caret"></span></button>
+                                            <ul class="dropdown-menu dropdown-menu-right" id="column_type_dropdown" style="min-width:250px;">
+                                                <li style="padding:10px;"><span class="font-w300">Field Type</span></li>
+                                                <li class="divider"></li>
+                                                {% for type in types %}
+                                                    <li class="column_types" style="cursor:pointer;padding:10px;position:sticky;z-index:700;{#{% if col['type'] == type['type'] %}border:1px solid #d3d3d3;border-radius:4px;background-color:#f5f5f5{% endif %}#}" onclick="SetColumnType('{{ type['name'] }}', '{{ type['type'] }}');">
+                                                        <span id="{{ type['type'] }}" class="font-w300">{{ type['name'] }}</span>
+                                                    </li>
+                                                {% endfor %}
+                                                <li style="cursor:pointer;padding:10px;position:sticky;z-index:700;display:none" onclick="DeleteColumn(this);">
+                                                    <span class="font-w300" style="color:red"><i class="fa fa-trash-o" style="margin-right:10px;"></i>Delete column</span>
+                                                </li>
+                                            </ul>
                                         </div>
-                                    </a>
-                                </div>
-                                <div class="col-xs-6">
-                                    <a class="block block-rounded" href="frontend_home.html">
-                                        <div class="block-content text-white bg-modern">
-                                            <i class="si si-rocket fa-2x"></i>
-                                            <div class="font-w600 push-15-t push-15">Frontend</div>
-                                        </div>
-                                    </a>
+                                    </div>
+                                    <br /><br />
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <!-- END Apps Block -->
+                        <div class="modal-footer">
+                            <div class="form-group">
+                                <select id="selected_type" name="selected_type" style="display:none">
+                                    <option id="selected_val" value="" selected></option>
+                                </select>
+                                <button class="btn btn-sm btn-default" type="button" data-dismiss="modal">Cancel</button>
+                                <button class="btn btn-sm btn-primary" type="submit" ><i class="fa fa-check"></i> Save</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -344,6 +292,8 @@
         <script>
             var rows = JSON.parse('{{ rows | tojson }}');
             var columns = JSON.parse('{{ cols | tojson }}');
+            var styles = {};
+
             var changed = function(instance, cell, x, y, value) {
                 // The row has been selected
                 if(x === '0'){
@@ -364,20 +314,44 @@
                 UpdateTable(item_id, col_name, value);
             };
 
+            // Style the cells on load
+            var loaded = function() {
+                var r = rows.length;
+                var c = columns.length;
+                for (var i = 1; i< c; i++){
+                    for (var j = 0; j< r; j++){
+                        var cellName = jexcel.getColumnNameFromId([i, j]);
+                        styles[cellName] = 'text-align:left;height:45px;background-color:white;vertical-align:middle;padding:5px 10px 5px 10px;font-weight: 300 !important;';
+                    }
+                }
+            };
+
+            var clicked = function(instance, x1, y1, x2, y2, origin) {
+                return;
+                var cellName1 = jexcel.getColumnNameFromId([x1, y1]);
+                var cellName2 = jexcel.getColumnNameFromId([x2, y2]);
+
+                alert(cellName1);
+            };
+
             var table = jexcel(document.getElementById('jtable'), {
                 data: rows,
                 lazyLoading: true,
                 columnDrag: true,
                 columns: columns,
-                onchange: changed
+                onchange: changed,
+                columnSorting:false,
+                onload: loaded,
+                onselection: clicked,
+                style: styles
             });
         </script>
 
         <!-- CSS styling -->
         <script type="text/javascript">
             function SetStyles() {
-                var table = document.getElementById('jtable');
-                table.style.minHeight = '600px';
+                var tbl = document.getElementById('jtable');
+                tbl.style.minHeight = '600px';
 
                 var headers = document.getElementsByTagName('thead')[0].getElementsByTagName('td');
                 for (var i = 0; i < headers.length; i++) {
@@ -385,15 +359,19 @@
                     headers[i].style.cssText = 'height:55px;background-color:white;vertical-align:middle;width:300px;text-transform:none;padding:5px 10px 5px 10px;';
                 }
 
-                var columns = document.getElementsByTagName('tbody')[0].getElementsByTagName('td');
-                for (var i = 0; i < columns.length; i++) {
-                    columns[i].className = 'font-w300 row-item';
-                    columns[i].style.cssText = 'height:35px;background-color:white;vertical-align:middle;min-width:300px;padding:5px 10px 5px 10px;';
+                // Create the edit button for the headers
+                for (var i = 2; i< headers.length; i++){
+                    var button = CreateChangeTypeButton(headers[i]);
+                    var div = CreateChangeTypeDiv(button);
+                    headers[i].appendChild(div);
                 }
 
-                StyleCheckBoxes(table);
-                CreateNewRowButton(table);
+                // Create new row and new column buttons
+                CreateNewRowButton(tbl);
+                CreateNewColumnButton(tbl);
 
+                // Miscellaneous style
+                StyleCheckBoxes(tbl);
                 StyleSelectBoxes();
             }
 
@@ -410,6 +388,20 @@
                 // Create the select boxes and the new Add Row button
                 StyleCheckBoxes(last_row);
                 CreateNewRowButton(document.getElementById('jtable'));
+            }
+
+            function StyleLastColumn(){
+                var tbl = document.getElementsByTagName('table')[0];
+                var row = tbl.rows[0];
+                var last_col = row.cells[row.cells.length - 1];
+                last_col.className = 'font-w300 row-item';
+                last_col.style.cssText = 'height:35px;background-color:white;vertical-align:middle;min-width:300px;padding:5px 10px 5px 10px;';
+                last_col.innerText = '';
+
+                // Set the last column's width
+                table.setWidth(last_col, 250);
+
+                return last_col;
             }
             
             // Styles all checkboxes to be centered in the column
@@ -430,6 +422,7 @@
                 }
             }
 
+            // Styles the boxes that hold the selct checkboxes, first column
             function StyleSelectBoxes(){
                 var rows = document.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
                 var select_boxes = [];
@@ -451,6 +444,7 @@
         <script type="text/javascript">
 
             // Updates the table after a change. Uses JQuery.
+            // Displays a success message on successful update
             function UpdateTable(row_id, col_name, val) {
                 // Format the column name to be found in the database
                 col_name = col_name.toLowerCase().replace(' ', '_');
@@ -487,6 +481,8 @@
 
         <!-- Create and Delete Rows and Columns -->
         <script type="text/javascript">
+
+            // Add a new row at the bottom of the list
             function AddRow() {
                 var tbl = document.getElementsByTagName('table')[0];
                 var rows = tbl.rows;
@@ -508,59 +504,29 @@
 
             }
 
+            // Add a new column at the end of the columns
+            function AddColumn() {
 
-            // Old, unused code from original table *****************
-            function CreateNewColumn() {
-                // Clone the add button, and delete it
-                var add_column_node = document.getElementById('add-column');
-                var new_add_button = add_column_node.cloneNode(true);
-                add_column_node.remove();
+                // Add a new column
+                table.insertColumn();
 
-                // add the new column to the table
-                var tbl = document.getElementById('table'), i;
-                var rows = tbl.rows;
+                // Style the new column
+                var header = StyleLastColumn();
 
-                // Create the header
-                var new_header = CreateHeaderColumn(tbl);
+                // Add a button to the new column's header
+                var button = CreateChangeTypeButton(header);
+                var div = CreateChangeTypeDiv(button);
+                header.appendChild(div);
 
-                // open loop for each row and append cell
-                for (i = 1; i < rows.length; i++) {
-                    CreateRowCell(tbl.rows[i])
-                }
+                // open the edit modal
+                $('#modal-normal').modal('toggle', button);
 
-                // re-add the new column button
-                tbl.rows[0].appendChild(new_add_button);
+                // Focus the button figure out why this isn't working
+                //document.getElementById('AddColumnButton').focus();
 
-                new_add_button.focus();
-                new_header.focus();
             }
 
-            function CreateRowCell(row){
-                var cells = row.cells;
-                var new_cell = cells[0].cloneNode(true);
-                new_cell.getElementsByTagName('input')[0].value = '';
-                var hidden_cell = cells[cells.length - 1].cloneNode(true);
-                hidden_cell.remove();
-
-                row.appendChild(new_cell);
-                row.appendChild(hidden_cell);
-            }
-
-            function CreateHeaderColumn(tbl){
-                var h = document.createElement('th');
-                h.style.cssText = "padding:0 !important;vertical-align:middle;min-width:300px;";
-                h.className = 'font-w300';
-
-                var input = document.createElement('input');
-                input.style.cssText = "box-sizing: border-box;width:100%; border:none;";
-                input.className = 'form-control contact';
-
-                h.appendChild(input);
-                tbl.rows[0].appendChild(h);
-
-                return input;
-            }
-
+            // Deletes rows that have been selected with the select boxes
             function DeleteRows(){
 
                 // Get the rows to be deleted
@@ -601,6 +567,7 @@
                 window.location.href='{{ url_for('user.dashboard') }}';
             }
 
+            // Old unimplemented code **********************
             function DeleteColumn(sel, col_name){
                 if (confirm("Are you sure you want to delete this column? This can't be undone.")) {
                     // Delete the column
@@ -637,8 +604,27 @@
 
             }
 
+            // Creates the button that creates new columns
+            function CreateNewColumnButton(){
+                var tbl = document.getElementsByTagName('table')[0];
+                var row = tbl.rows[0];
+                var height = row.cells[0].offsetHeight + 1;
+
+                var new_column = document.getElementById("AddColumnButton");
+
+                // Add the new row button
+                var new_button = document.createElement('i');
+                new_button.className = "si si-plus";
+                new_button.id = 'add-column-button';
+                new_column.appendChild(new_button);
+
+                new_column.className = 'text-center';
+                new_column.style.cssText = "padding-top:20px;cursor:pointer; border:1px solid #d3d3d3;border-radius:4px;width:55px;height:" + height + "px; position:absolute;top:1px;right:-45px;";
+                new_column.onclick=function(){AddColumn()};
+            }
+
+            // Generate an ID for the new row
             function GenerateRowId(rows){
-                // Generate an ID for the new row
                 $.ajax({
                     url: '{{ url_for("user.new_row_id") }}',
                     type: 'GET',
@@ -663,15 +649,74 @@
                 });
             }
 
+            function RenameHeader(sel){
+                var cellIndex = sel.cellIndex;
+                var header = document.getElementsByTagName('thead')[0].getElementsByTagName('td')[cellIndex];
+                var input = document.createElement('input');
+
+                //header.innerHTML = '';
+                header.appendChild(input);
+                input.onblur = function(){header.innerText = input.value};
+                //table.setHeader(header);
+            }
+
+            function CreateChangeTypeDiv(button){
+                var div = document.createElement('div');
+                div.classList = "input-group-btn text-center";
+                div.style.cssText = 'width:34px;float:right;';
+                div.appendChild(button);
+
+                return div;
+            }
+
+            function CreateChangeTypeButton(header){
+                var button = document.createElement('button');
+                button.classList = "btn btn-default";
+                button.setAttribute("data-toggle", "modal");
+                button.setAttribute("data-target", "#modal-normal");
+                button.type = "button";
+                button.id = header.cellIndex - 1; // We do -1 here because the cellIndex and the column numbers are offset by 1
+                button.name = header.innerText;
+
+                var span = document.createElement('span');
+                span.classList = 'si si-pencil';
+                button.appendChild(span);
+
+                return button;
+            }
+
+            $('#modal-normal').on('shown.bs.modal', function (e) {
+                var id = e.relatedTarget.id;
+                var name = e.relatedTarget.name;
+                var type = table.options.columns[id].type;
+
+                // Set the column's name in the modal box
+                document.getElementById('column_name').value = name;
+                document.getElementById('old_column_name').value = name;
+
+                SetColumnType(type, id);
+
+            });
+
+            function SetColumnType(name, type){
+                document.getElementById("selected_val").value = type;
+                var types = document.getElementsByClassName('column_types');
+
+                for (var i = 0; i < types.length; i++){
+                    var li = types[i];
+                    var span = li.getElementsByTagName('span')[0];
+
+                    if (span.id === type){
+                        document.getElementById('column_type').value = span.innerText;
+                        li.style.cssText += ' border:1px solid #d3d3d3;border-radius:4px;background-color:#f5f5f5';
+                    }
+                }
+            }
+
             // Old, unused code from original table *****************
             function FocusAddColumnButton(){
                 var add_column_node = document.getElementById('add-column');
                 add_column_node.focus();
-            }
-
-            function SetColumnType(sel, type){
-                var col = document.getElementById(sel);
-                col.type = type;
             }
 
             function SelectAll(sel) {

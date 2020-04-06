@@ -6,6 +6,8 @@ import string
 import random
 import requests
 import traceback
+import psycopg2
+from alembic import op
 from datetime import datetime
 from collections import defaultdict
 from app.extensions import db
@@ -34,8 +36,9 @@ def get_rows(d):
     rows = list()
 
     # Get the rows and the columns
-    domains = d.query.order_by(asc(d.created_on)).all()
-    columns = d.__table__.columns
+    # domains = db.session.query.order_by(asc(d.created_on)).all()
+    domains = db.session.query(d).all()
+    columns = d.columns
 
     for domain in domains:
 
@@ -68,16 +71,27 @@ def add_blank_row(rows, columns):
     rows.append(data)
 
 
+def get_table(d):
+    conn = db.create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI'))
+    m = db.MetaData()
+    m.reflect(conn)
+    t = None
+    for table in m.tables.values():
+        if table.name == d:
+            t = table
+
+    db.session.close()
+    return t
+
+
 def get_columns(d):
 
-    # Make the first column the select boxes
-    # cols = list()
     cols = [{'title': ' ', 'type': 'checkbox', 'width': 50}]
 
     # Get the columns
-    columns = d.__table__.columns
+    columns = d.columns
     for column in columns:
-        width = 175
+        width = 250
         options = {}
         type = str(column.type).lower().strip()
         if type == 'varchar(255)': type = 'text'
@@ -85,7 +99,10 @@ def get_columns(d):
         # Format boolean columns
         if type == 'boolean':
             type = 'checkbox'
-            width = 100
+            width = 150
+
+        if type == 'integer':
+            type = 'numeric'
 
         # Format date columns
         if type == 'date' or type == 'datetime':
@@ -133,6 +150,21 @@ def update_row(id, val, col):
         return False
 
 
+def update_column(name, old, type):
+    try:
+        from app.blueprints.api.models.domains import Domain as d
+        table_name = d.__table__.name
+
+        return True
+    except Exception as e:
+        print_traceback(e)
+        return False
+
+
+def alter_column(table_name, old, name):
+    return op.alter_column(table_name, old, nullable=False, new_column_name=name)
+
+
 def delete_rows(rows):
     from app.blueprints.api.models.domains import Domain
     for row in rows:
@@ -168,3 +200,24 @@ def format_column_name(col):
 def print_traceback(e):
     traceback.print_tb(e.__traceback__)
     print(e)
+
+
+def add_column(table, column, type):
+    try:
+
+        print(type)
+        user = current_app.config.get('SQLALCHEMY_USER')
+        database = current_app.config.get('SQLALCHEMY_DATABASE')
+        host = current_app.config.get('SQLALCHEMY_HOST')
+        password = current_app.config.get('SQLALCHEMY_PASSWORD')
+
+        conn = psycopg2.connect(host=host, database=database, user=user, password=password)
+
+        cur = conn.cursor()
+        cur.execute('ALTER TABLE %s ADD COLUMN %s %s' % (table, column, type))
+        conn.commit()
+
+        return True
+    except Exception as e:
+        print_traceback(e)
+        return False

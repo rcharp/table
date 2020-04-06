@@ -231,27 +231,17 @@ def dashboard():
     if current_user.role == 'admin':
         return redirect(url_for('admin.dashboard'))
 
-    from app.blueprints.api.models.domains import Domain as d
-    from app.blueprints.api.models.searched import SearchedDomain as s
-    from app.blueprints.api.api_functions import get_col_types, generate_id, get_rows, get_columns
+    from app.blueprints.api.api_functions import get_col_types, generate_id, get_rows, get_columns, get_table
 
     # Which table are we using?
-    table = d
+    table_name = 'domains'
+    table = get_table(table_name)
 
     rows = get_rows(table)
     cols = get_columns(table)
 
     types = get_col_types()
     row_id = generate_id()
-    table_name = table.__table__.name
-
-    p = 'none'
-    if p == 'col':
-        for col in cols:
-            print(col)
-    elif p == 'row':
-        for row in rows:
-            print(row)
 
     return render_template('user/jtable.html', current_user=current_user,
                            cols=cols,
@@ -305,6 +295,24 @@ def delete_rows():
             from app.blueprints.api.api_functions import delete_rows
             result = delete_rows(rows)
             return jsonify({'result': result})
+    return redirect(url_for('user.dashboard'))
+
+
+@user.route('/update_column', methods=['GET','POST'])
+@csrf.exempt
+def update_column():
+    try:
+        if request.method == 'POST':
+            print(request.form)
+            if 'column_name' in request.form and 'selected_type' in request.form and 'table_name' in request.form:
+                col = request.form['column_name']
+                type = request.form['selected_type']
+                table = request.form['table_name']
+
+                from app.blueprints.api.api_functions import add_column
+                add_column(table, col, type)
+    except Exception as e:
+        print_traceback(e)
     return redirect(url_for('user.dashboard'))
 
 

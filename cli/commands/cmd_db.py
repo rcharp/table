@@ -4,11 +4,12 @@ import inspect
 import pkgutil
 
 from sqlalchemy_utils import database_exists, create_database
-
+import datetime
 from app.app import create_app
 from app.extensions import db
 from app.blueprints.user.models import User
 from app.blueprints.billing.models.customer import Customer
+from app.blueprints.api.models.domains import Domain
 from importlib import import_module
 from app.blueprints.api.api_functions import print_traceback
 
@@ -69,7 +70,7 @@ def seed():
     member2 = {
         'role': 'member',
         'email': app.config['SEED_TEST_EMAIL'],
-        'password': app.config['SEED_TEST_PASSWORD']
+        'password': app.config['SEED_ADMIN_PASSWORD']
     }
 
     User(**member).save()
@@ -92,22 +93,31 @@ def seed_customer():
 
 @click.command()
 def seed_domains():
-    domain1 = {
-        'user_id': 1,
-        'customer_id': app.config['SEED_CUSTOMER_ID'],
-        'name': 'rickycharpentier.xyz',
-        'registered': True
-    }
+    expires = datetime.datetime(2020, 5, 17).date()
+    available = datetime.datetime(2020, 4, 1).date()
+    domains = ['backflip.io', 'instructor.io', 'photocamp.io', 'jobscape.io', 'creativedesign.io', 'budgetplanner.io', 'userflows.io']
 
-    domain2 = {
-        'user_id': 1,
-        'customer_id': app.config['SEED_CUSTOMER_ID'],
-        'name': 'rickycharpentier.cc',
-        'registered': True
-    }
+    for x in range(672):
+        d = {
+            'user_id': 1,
+            'customer_id': app.config['SEED_CUSTOMER_ID'],
+            'name': random.choice(domains),
+            'registered': True,
+            'expires': expires,
+            'date_available': available
+        }
+        Domain(**d).save()
 
-    Domain(**domain1).save()
-    return Domain(**domain2).save()
+    d2 = {
+            'user_id': 1,
+            'customer_id': app.config['SEED_CUSTOMER_ID'],
+            'name': 'remotecollab.io',
+            'registered': True,
+            'expires': expires,
+            'date_available': available
+        }
+
+    return Domain(**d2).save()
 
 
 @click.command()

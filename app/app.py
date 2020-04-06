@@ -12,7 +12,6 @@ from flask import Flask, render_template, url_for, flash, redirect
 from celery import Celery
 from itsdangerous import URLSafeTimedSerializer
 from flask_compress import Compress
-
 from app.blueprints.admin import admin
 from app.blueprints.page import page
 from app.blueprints.contact import contact
@@ -32,8 +31,9 @@ from app.extensions import (
     csrf,
     db,
     login_manager,
-    cache
+    cache,
 )
+
 
 CELERY_TASK_LIST = [
     'app.blueprints.api.tasks',
