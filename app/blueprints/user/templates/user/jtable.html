@@ -297,13 +297,13 @@
             var changed = function(instance, cell, x, y, value) {
                 // The row has been selected
                 if(x === '0'){
-                    RowSelected();
+                    return;
                 }
 
                 // The index of the row and cell we're changing
                 var cellIndex = cell.cellIndex;
                 var rowIndex = cell.parentNode.rowIndex;
-                var idColumnIndex = GetIdColumnIndex();
+                var idColumnIndex = GetColumnIndex();
 
                 // Get the column name of the cell we're changing
                 var col_name = document.getElementsByTagName('table')[0].rows[0].cells[cellIndex].innerText;
@@ -327,10 +327,6 @@
             };
 
             var clicked = function(instance, x1, y1, x2, y2, origin) {
-                var cellName1 = jexcel.getColumnNameFromId([x1, y1]);
-                var cellName2 = jexcel.getColumnNameFromId([x2, y2]);
-
-                alert(cellName1);
             };
 
             var table = jexcel(document.getElementById('jtable'), {
@@ -436,6 +432,7 @@
                 // set the class on the select boxes
                 for (var i = 0; i< select_boxes.length; i++){
                     select_boxes[i].classList += 'select-box';
+                    select_boxes[i].onchange=function(){RowSelected()};
                 }
             }
         </script>
@@ -464,10 +461,10 @@
             }
 
             // Gets the row's id from the table to know which row to update in the database
-            function GetIdColumnIndex(){
+            function GetColumnIndex(column){
                 var headers = document.getElementsByTagName('thead')[0].getElementsByTagName('td');
                 for (var i = 0; i < headers.length; i++) {
-                    if (headers[i].innerText === 'Id'){
+                    if (headers[i].innerText === column){
                         return headers[i].cellIndex;
                     }
                 }
@@ -492,6 +489,9 @@
                 // remove the 'new' button from the former last row
                 // and clone it from the one before it
                 last_row.innerHTML = second_last_row.innerHTML;
+
+                // Reset the selection before creating the row
+                table.resetSelection();
 
                 // Add a new row
                 table.insertRow();
@@ -533,7 +533,7 @@
                 var rows_to_delete = [];
 
                 // We need to know which column the row's id is in, to delete it
-                var idColumnIndex = GetIdColumnIndex();
+                var idColumnIndex = GetColumnIndex("Record Id");
 
                 for (var i = 0; i < count; i++){
                     var rowIndex = checkedBoxes[i].parentNode.parentNode.parentNode.rowIndex;
@@ -626,6 +626,7 @@
                 return div;
             }
         </script>
+
         <!-- Miscellaneous helper functions -->
         <script type="text/javascript">
             function Refresh(){
@@ -646,10 +647,15 @@
                                 type: 'POST',
                                 data: {'row-id': new_id},
                                 success: function (response) {
-                                    var idColumnIndex = GetIdColumnIndex();
+                                    var idColumnIndex = GetColumnIndex("Record Id");
+                                    var createdColumnIndex = GetColumnIndex("Created On");
+                                    var updatedColumnIndex = GetColumnIndex("Last Updated");
                                     rows[rows.length - 2].cells[idColumnIndex].innerText = new_id;
+                                    rows[rows.length - 2].cells[createdColumnIndex].innerText = GetTodayDate();
+                                    rows[rows.length - 2].cells[updatedColumnIndex].innerText = GetTodayDate();
                                 },
                                 error: function (xhr) {
+                                    alert("didnt create row id");
                                     rows[rows.length - 1].remove();
                                 }
                             });
@@ -667,12 +673,13 @@
                 document.getElementById('column_name').value = name;
                 document.getElementById('old_column_name').value = name;
 
-                SetColumnType(type, id);
+                SetColumnType(name, type, id);
 
             });
 
-            function SetColumnType(name, type){
-                document.getElementById("selected_val").value = type;
+            function SetColumnType(name, type, id){
+                alert(name + '/' + type + '/' + id);
+                document.getElementById("selected_val_" + id).value = type;
                 var types = document.getElementsByClassName('column_types');
 
                 for (var i = 0; i < types.length; i++){
@@ -690,21 +697,25 @@
                 }#}
             }
             function RowSelected() {
-                var checkboxes = document.getElementsByClassName('select-box');
-                var box_selected = false;
-                for(var i = 0; i < checkboxes.length; i++){
-                    if (checkboxes[i].checked === true){
-                        box_selected = true;
-                    }
-                }
+                var checkedBoxes = document.querySelectorAll('input[class=select-box]:checked').length;
 
-                if (box_selected){
-                    document.getElementById('selected_rows').innerText = document.querySelectorAll('input[class=select-box]:checked').length;
+                if (checkedBoxes > 0){
+                    document.getElementById('selected_rows').innerText = checkedBoxes;
                     document.getElementById('delete-selected').style.visibility = 'visible';
                 }
                 else {
                     document.getElementById('delete-selected').style.visibility = 'hidden';
                 }
+            }
+
+            function GetTodayDate(){
+                var today = new Date();
+                var dd = String(today.getDate()).padStart(2, '0');
+                var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+                var yyyy = today.getFullYear();
+
+                today = mm + '/' + dd + '/' + yyyy;
+                return today;
             }
         </script>
 

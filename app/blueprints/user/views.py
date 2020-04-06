@@ -49,6 +49,7 @@ from app.blueprints.billing.charge import (
 )
 from app.blueprints.api.api_functions import print_traceback
 from app.blueprints.api.models.domains import Domain
+from app.blueprints.page.date import get_utc_date_today
 
 user = Blueprint('user', __name__, template_folder='templates')
 

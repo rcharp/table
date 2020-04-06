@@ -92,6 +92,7 @@ def get_columns(d):
     for column in columns:
         width = 250
         options = {}
+        data = {}
         type = str(column.type).lower().strip()
         if 'varchar' in type: type = 'text'
         # Format boolean columns
@@ -108,11 +109,15 @@ def get_columns(d):
             options.update({'today': True, 'format': 'MM/DD/YYYY'})
 
         # Make created and updated columns readonly
-        if column.name == 'created_on' or column.name == 'updated_on':
-            options.update({'readOnly': True})
+        if column.name == 'created_on' or column.name == 'updated_on' or column.name == 'id':
+            width = 150
+            data.update({'readOnly': True})
+
+        # Update the column's data
+        data.update({'title': format_column_name(column.name), 'type': type, 'options': options, 'width': width})
 
         # Create a dictionary for each column name and its type
-        cols.append({'title': format_column_name(column.name), 'type': type, 'options': options, 'width': width})
+        cols.append(data)
 
     return cols
 
@@ -192,6 +197,8 @@ def get_col_types():
 
 
 def format_column_name(col):
+    if col == 'id': col = 'record id'
+    if col == 'updated_on': col = 'last updated'
     return col.replace('_', ' ').title()
 
 
