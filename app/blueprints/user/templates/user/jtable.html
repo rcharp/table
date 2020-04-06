@@ -524,9 +524,7 @@
 
             }
 
-            // Old, unused code from original table *****************
             function DeleteRows(){
-
                 // Get the rows to be deleted
                 var checkedBoxes = [].slice.call(document.querySelectorAll('input[class=select-box]:checked'));
                 var count = checkedBoxes.length;
@@ -560,11 +558,6 @@
                     });
                 }
             }
-
-            function Refresh(){
-                window.location.href='{{ url_for('user.dashboard') }}';
-            }
-
         </script>
 
         <!-- Button functions -->
@@ -633,6 +626,10 @@
         </script>
         <!-- Miscellaneous helper functions -->
         <script type="text/javascript">
+            function Refresh(){
+                window.location.href='{{ url_for('user.dashboard') }}';
+            }
+
             function GenerateRowId(rows){
                 // Generate an ID for the new row
                 $.ajax({
