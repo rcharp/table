@@ -352,6 +352,7 @@
                 var tbl = document.getElementById('jtable');
                 tbl.style.minHeight = '600px';
 
+                // Style the headers
                 var headers = document.getElementsByTagName('thead')[0].getElementsByTagName('td');
                 for (var i = 0; i < headers.length; i++) {
                     headers[i].className = 'font-w300 header-item';
@@ -417,6 +418,7 @@
                     wrapper.appendChild(checkBoxes[i]);
                     wrapper.appendChild(document.createElement('span'));
                     wrapper.parentElement.classList += ' text-center';
+                    wrapper.parentElement.style.cssText -= 'text-align: left;';
                 }
             }
 

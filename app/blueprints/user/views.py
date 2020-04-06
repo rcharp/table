@@ -237,7 +237,12 @@ def dashboard():
     table_name = 'domains'
     table = get_table(table_name)
 
-    rows = get_rows(table)
+    l = True
+    limit = 10
+
+    limit = None if not l else limit
+
+    rows = get_rows(table, limit)
     cols = get_columns(table)
 
     types = get_col_types()

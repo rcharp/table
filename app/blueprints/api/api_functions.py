@@ -32,12 +32,12 @@ def generate_id(size=7, chars=string.digits):
         generate_id()
 
 
-def get_rows(d):
+def get_rows(d, limit=None):
     rows = list()
 
     # Get the rows and the columns
     # domains = db.session.query.order_by(asc(d.created_on)).all()
-    domains = db.session.query(d).all()
+    domains = db.session.query(d).limit(limit).all()
     columns = d.columns
 
     for domain in domains:
@@ -56,7 +56,6 @@ def get_rows(d):
 
             # Add the column's value to the list
             data.append(e)
-
         rows.append(data)
 
     # Add a blank row to the list
@@ -66,7 +65,7 @@ def get_rows(d):
 
 def add_blank_row(rows, columns):
     data = [False]
-    for column in columns:
+    for x in range(len(columns)):
         data.append(None)
     rows.append(data)
 
@@ -94,18 +93,17 @@ def get_columns(d):
         width = 250
         options = {}
         type = str(column.type).lower().strip()
-        if type == 'varchar(255)': type = 'text'
-
+        if 'varchar' in type: type = 'text'
         # Format boolean columns
-        if type == 'boolean':
+        if 'boolean' in type or 'tinyint' in type:
             type = 'checkbox'
             width = 150
 
-        if type == 'integer':
+        if 'integer' in type:
             type = 'numeric'
 
         # Format date columns
-        if type == 'date' or type == 'datetime':
+        if 'date' in type:
             type = 'calendar'
             options.update({'today': True, 'format': 'MM/DD/YYYY'})
 
