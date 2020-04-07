@@ -309,14 +309,14 @@ def delete_rows():
 def update_column():
     try:
         if request.method == 'POST':
-            print(request.form)
-            if 'column_name' in request.form and 'selected_type' in request.form and 'table_name' in request.form:
+            if 'column_name' in request.form and 'old_column_name' in request.form and 'selected_type' in request.form and 'table_name' in request.form:
                 col = request.form['column_name']
+                old = request.form['old_column_name']
                 type = request.form['selected_type']
                 table = request.form['table_name']
 
-                from app.blueprints.api.api_functions import add_column
-                add_column(table, col, type)
+                from app.blueprints.api.api_functions import update_column
+                update_column(table, col, old, type)
     except Exception as e:
         print_traceback(e)
     return redirect(url_for('user.dashboard'))

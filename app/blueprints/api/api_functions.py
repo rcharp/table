@@ -2,6 +2,7 @@ import re
 import sys
 import time
 import pytz
+import boto3
 import string
 import random
 import requests
@@ -71,7 +72,7 @@ def add_blank_row(rows, columns):
 
 
 def get_table(d):
-    conn = db.create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI'))
+    conn = db.create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI'), connect_args={'connect_timeout': 120})
     m = db.MetaData()
     m.reflect(conn)
     t = None
@@ -153,10 +154,34 @@ def update_row(id, val, col):
         return False
 
 
-def update_column(name, old, type):
+def update_column(table, name, old, type):
     try:
-        from app.blueprints.api.models.domains import Domain as d
-        table_name = d.__table__.name
+        old = col_title_to_name(old)
+
+        access_key = current_app.config.get('AWS_ACCESS_KEY_ID')
+        secret_key = current_app.config.get('AWS_ACCESS_KEY_SECRET')
+        region = current_app.config.get('AWS_DEFAULT_REGION')
+        partition_key = current_app.config.get('AWS_PARTITION_KEY')
+
+        # Get the service resource.
+
+        dynamodb = boto3.client('dynamodb', aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name=region)
+        dynamodb.put_item(
+            TableName='column_names',
+            Item={
+                partition_key:{"S": partition_key},
+                table:
+                    {"M":
+                         {name:
+                              {"M":
+                                   {'column_name': {"S": name},
+                                    'default_column_name': {"S": old}
+                                    }
+                               }
+                          }
+                     }
+                }
+            )
 
         return True
     except Exception as e:
@@ -209,8 +234,7 @@ def print_traceback(e):
 
 def add_column(table, column, type):
     try:
-
-        print(type)
+        type = format_type(type)
         user = current_app.config.get('SQLALCHEMY_USER')
         database = current_app.config.get('SQLALCHEMY_DATABASE')
         host = current_app.config.get('SQLALCHEMY_HOST')
@@ -226,3 +250,18 @@ def add_column(table, column, type):
     except Exception as e:
         print_traceback(e)
         return False
+
+
+def format_type(type):
+    if type == 'text' or type == 'email' or type == 'phone' or type == 'url' or type == 'currency' or type == 'percent':
+        return 'text'
+    if type == 'checkbox':
+        return 'bool'
+    if type == 'calendar':
+        return 'date'
+    if type == 'numeric':
+        return 'int'
+
+
+def col_title_to_name(col):
+    return col.lower().replace(' ','_')
