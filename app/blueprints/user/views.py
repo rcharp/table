@@ -249,7 +249,40 @@ def dashboard():
     types = get_col_types()
     row_id = generate_id()
 
-    return render_template('user/jtable.html', current_user=current_user,
+    return render_template('user/dashboard.html', current_user=current_user,
+                           cols=cols,
+                           rows=rows,
+                           table_name=table_name,
+                           types=types,
+                           new_row_id=row_id)
+
+
+# View Sheet -------------------------------------------------------------------
+@user.route('/sheet', methods=['GET','POST'])
+@login_required
+@csrf.exempt
+def sheet():
+    if current_user.role == 'admin':
+        return redirect(url_for('admin.dashboard'))
+
+    from app.blueprints.api.api_functions import get_col_types, generate_id, get_rows, get_columns, get_table
+
+    # Which table are we using?
+    table_name = 'domains'
+    table = get_table(table_name)
+
+    l = True
+    limit = 10
+
+    limit = None if not l else limit
+
+    rows = get_rows(table, limit)
+    cols = get_columns(table)
+
+    types = get_col_types()
+    row_id = generate_id()
+
+    return render_template('user/sheet.html', current_user=current_user,
                            cols=cols,
                            rows=rows,
                            table_name=table_name,

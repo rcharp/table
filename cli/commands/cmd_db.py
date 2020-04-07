@@ -58,12 +58,14 @@ def seed():
     params = {
         'role': 'admin',
         'email': app.config['SEED_ADMIN_EMAIL'],
+        'username': app.config['SEED_ADMIN_USERNAME'],
         'password': app.config['SEED_ADMIN_PASSWORD']
     }
 
     member = {
         'role': 'member',
         'email': app.config['SEED_MEMBER_EMAIL'],
+        'username': app.config['SEED_MEMBER_USERNAME'],
         'password': app.config['SEED_ADMIN_PASSWORD']
     }
 
@@ -102,7 +104,7 @@ def seed_domains():
             'user_id': 1,
             'customer_id': app.config['SEED_CUSTOMER_ID'],
             'name': random.choice(domains),
-            'registered': True,
+            'registered': random.choice([True, False]),
             'expires': expires,
             'date_available': available
         }

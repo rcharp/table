@@ -14,6 +14,7 @@ from itsdangerous import URLSafeTimedSerializer, \
 
 from lib.util_sqlalchemy import ResourceMixin, AwareDateTime
 from app.blueprints.billing.models.customer import Customer
+from app.blueprints.api.models.domains import Domain
 from app.blueprints.api.api_functions import print_traceback
 from app.extensions import db
 
@@ -30,6 +31,8 @@ class User(UserMixin, ResourceMixin, db.Model):
     # Relationships.
     customer = db.relationship(Customer, uselist=False, lazy='subquery',
                                    backref='users', passive_deletes=True)
+    domain = db.relationship(Domain, uselist=False, backref='users', lazy='subquery',
+                             passive_deletes=True)
 
     # Authentication.
     role = db.Column(db.Enum(*ROLE, name='role_types', native_enum=False),

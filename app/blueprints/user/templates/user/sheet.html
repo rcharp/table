@@ -13,13 +13,14 @@
 
         <!-- Icons -->
         <!-- The following icons can be replaced with your own, they are used by desktop and mobile browsers -->
-        <link rel="shortcut icon" href="../../../../static/oneui/assets/img/favicons/favicon.png">
+        <link rel="shortcut icon" href="../../../../static/favicon.ico">
 
-        <link rel="icon" type="image/png" href="../../../../static/oneui/assets/img/favicons/favicon-16x16.png" sizes="16x16">
-        <link rel="icon" type="image/png" href="../../../../static/oneui/assets/img/favicons/favicon-32x32.png" sizes="32x32">
-        <link rel="icon" type="image/png" href="../../../../static/oneui/assets/img/favicons/favicon-96x96.png" sizes="96x96">
-        <link rel="icon" type="image/png" href="../../../../static/oneui/assets/img/favicons/favicon-160x160.png" sizes="160x160">
-        <link rel="icon" type="image/png" href="../../../../static/oneui/assets/img/favicons/favicon-192x192.png" sizes="192x192">
+        <link rel="icon" type="image/png" href="../../../../static/logo.png" sizes="16x16">
+        <link rel="icon" type="image/png" href="../../../../static/logo.png" sizes="32x32">
+        <link rel="icon" type="image/png" href="../../../../static/logo.png" sizes="64x64">
+        <link rel="icon" type="image/png" href="../../../../static/logo.png" sizes="160x160">
+        <link rel="icon" type="image/png" href="../../../../static/logo.png" sizes="192x192">
+
         <!-- END Icons -->
 
         <!-- jexcel v4-->
@@ -52,7 +53,7 @@
         <!-- END Stylesheets -->
     </head>
     {% set focus = false %}
-    <body onload="SetStyles(); {% if focus %}FocusAddColumnButton();{% endif %}">
+    <body style="zoom: 80%;" onload="SetStyles(); {% if focus %}FocusAddColumnButton();{% endif %}">
         <!-- Page Container -->
         <!--
             Available Classes:
@@ -80,38 +81,42 @@
                 <ul class="nav-header pull-right">
                     <li>
                         <div class="btn-group">
-                            <button class="btn btn-default btn-image dropdown-toggle" data-toggle="dropdown" type="button" onclick="SetStyles();">
-                                <img src="../../../../static/oneui/assets/img/avatars/avatar10.jpg" alt="Avatar">
+                            <button class="btn btn-default btn-image dropdown-toggle" data-toggle="dropdown" type="button" style="margin-top:0; padding-left:10px;">
+                                <!--<img src="../../../../static/oneui/assets/img/avatars/avatar10.jpg" alt="Avatar">-->
+                                <i class="si si-user"></i>
                                 <span class="caret"></span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-right">
                                 <li class="dropdown-header">Profile</li>
                                 <li>
-                                    <a tabindex="-1" href="base_pages_inbox.html">
-                                        <i class="si si-envelope-open pull-right"></i>
-                                        <span class="badge badge-primary pull-right">3</span>Inbox
-                                    </a>
-                                </li>
-                                <li>
-                                    <a tabindex="-1" href="base_pages_profile.html">
-                                        <i class="si si-user pull-right"></i>
-                                        <span class="badge badge-success pull-right">1</span>Profile
-                                    </a>
-                                </li>
-                                <li>
                                     <a tabindex="-1" href="javascript:void(0)">
-                                        <i class="si si-settings pull-right"></i>Settings
+                                        {{ current_user.email }}
                                     </a>
                                 </li>
                                 <li class="divider"></li>
                                 <li class="dropdown-header">Actions</li>
                                 <li>
-                                    <a tabindex="-1" href="base_pages_lock.html">
-                                        <i class="si si-lock pull-right"></i>Lock Account
+                                    <a tabindex="-1" href="{{ url_for('user.dashboard') }}">
+                                        <i class="si si-grid pull-right"></i>My Dashboard
                                     </a>
                                 </li>
                                 <li>
-                                    <a tabindex="-1" href="base_pages_login.html">
+                                    <a tabindex="-1" href="{{ url_for('user.sheet') }}">
+                                        <i class="si si-clock pull-right"></i>Sheet
+                                    </a>
+                                </li>
+                                <li>
+                                    <a tabindex="-1" href="{{ url_for('user.settings') }}">
+                                        <i class="si si-settings pull-right"></i>Settings
+                                    </a>
+                                </li>
+                                <li>
+                                    <a tabindex="-1" href="{{ url_for('user.contact') }}">
+                                        <i class="si si-bubbles pull-right"></i>Contact us
+                                    </a>
+                                </li>
+                                <li>
+                                    <a tabindex="-1" href="{{ url_for('user.logout') }}">
                                         <i class="si si-logout pull-right"></i>Log out
                                     </a>
                                 </li>
@@ -209,7 +214,7 @@
 
         <!-- Apps Modal -->
         <!-- Opens from the button in the header -->
-        <div class="modal in" id="modal-normal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal in" id="edit-column-modal" tabindex="-1" role="dialog" aria-hidden="true">
             <div class="modal-dialog" style="width:500px;height:200px;">
                 <div class="modal-content">
                     <form class="form-horizontal push-5-t" action="{{ url_for('user.update_column' ) }}" method="post">
@@ -259,8 +264,8 @@
                                 <select id="selected_type" name="selected_type" style="display:none">
                                     <option id="selected_val" value="" selected></option>
                                 </select>
-                                <button class="btn btn-sm btn-default" type="button" data-dismiss="modal">Cancel</button>
-                                <button class="btn btn-sm btn-primary" type="submit" ><i class="fa fa-check"></i> Save</button>
+                                <button class="btn btn-sm btn-default" type="button" id="cancel-update-column" data-dismiss="modal">Cancel</button>
+                                <button class="btn btn-sm btn-primary" type="submit" id="save-update-column" onclick="SaveColumn(this);"><i class="fa fa-check"></i> Save</button>
                             </div>
                         </div>
                     </form>
@@ -321,7 +326,7 @@
                 for (var i = 1; i< c; i++){
                     for (var j = 0; j< r; j++){
                         var cellName = jexcel.getColumnNameFromId([i, j]);
-                        styles[cellName] = 'text-align:left;height:45px;background-color:white;vertical-align:middle;padding:5px 10px 5px 10px;font-weight: 300 !important;';
+                        styles[cellName] = 'font-weight:300 !important;text-align:left;height:45px;background-color:white;vertical-align:middle;padding:5px 10px 5px 10px;';
                     }
                 }
             };
@@ -516,12 +521,12 @@
                 var header = StyleLastColumn();
 
                 // Add a button to the new column's header
-                var button = CreateChangeTypeButton(header);
+                var button = CreateChangeTypeButton(header, true);
                 var div = CreateChangeTypeDiv(button);
                 header.appendChild(div);
 
                 // open the edit modal
-                $('#modal-normal').modal('toggle', button);
+                $('#edit-column-modal').modal('toggle', button);
 
                 // Focus the button
                 //document.getElementById('AddColumnButton').focus();
@@ -603,11 +608,12 @@
                 new_column.onclick=function(){AddColumn()};
             }
 
-            function CreateChangeTypeButton(header){
+            function CreateChangeTypeButton(header, isNewColumn=false){
                 var button = document.createElement('button');
                 button.classList = "btn btn-xs btn-default";
                 button.setAttribute("data-toggle", "modal");
-                button.setAttribute("data-target", "#modal-normal");
+                button.setAttribute("data-target", "#edit-column-modal");
+                button.setAttribute("new-column", String(isNewColumn));
                 button.type = "button";
                 button.id = header.cellIndex - 1; // We do -1 here because the cellIndex and the column numbers are offset by 1
                 button.name = header.innerText;
@@ -665,7 +671,20 @@
                 });
             }
 
-            $('#modal-normal').on('shown.bs.modal', function (e) {
+            // When the edit column modal is shown
+            $('#edit-column-modal').on('shown.bs.modal', function (e) {
+
+                // If it's a new column that opened this modal, then clicking cancel will delete the column
+                if (e.relatedTarget.getAttribute('new-column') === "true"){
+                    document.getElementById('cancel-update-column').setAttribute("delete-column", String(true));
+                }
+                else{
+                    document.getElementById('cancel-update-column').setAttribute("delete-column", String(false));
+                }
+
+                // Save this button's id to the save button in the modal, so we can update the button as necessary
+                document.getElementById('save-update-column').setAttribute('edit-button-id', e.relatedTarget.id);
+
                 var id = e.relatedTarget.id;
                 var name = e.relatedTarget.name;
                 var type = table.options.columns[id].type;
@@ -676,6 +695,17 @@
 
                 UpdateColumn(name, type, id);
 
+            });
+
+            // When the edit column modal is hidden
+            $('#edit-column-modal').on('hide.bs.modal', function (e) {
+                var input = document.getElementById('column_name');
+                var cancel_button = document.getElementById('cancel-update-column').getAttribute("delete-column");
+
+                // Delete the column if the modal closes and it's a new column without a name
+                if (input.value === "" && cancel_button === "true"){
+                   table.deleteColumn();
+                }
             });
 
             function UpdateColumn(name, type, id){
@@ -703,6 +733,10 @@
                 {#if (set_type){
                     table.options.columns[column].type = type;
                 }#}
+            }
+
+            function SaveColumn(sel){
+                document.getElementById(sel.getAttribute('edit-button-id').setAttribute("new-column", String(false)));
             }
             function RowSelected() {
                 var checkedBoxes = document.querySelectorAll('input[class=select-box]:checked').length;
