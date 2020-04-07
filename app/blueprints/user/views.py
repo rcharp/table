@@ -359,6 +359,7 @@ def delete_rows():
 @csrf.exempt
 def update_column():
     try:
+        print(request.form)
         if request.method == 'POST':
             if 'column_name' in request.form and 'old_column_name' in request.form and 'selected_type' in request.form and 'table_name' in request.form:
                 col = request.form['column_name']

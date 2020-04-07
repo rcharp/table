@@ -234,7 +234,7 @@
                                         <button data-dismiss="modal" type="button"><i class="si si-close"></i></button>
                                     </li>
                                 </ul>
-                                <h3 class="font-w300 text-white" id="update-title">Update Column</h3>
+                                <h3 class="font-w300 text-white" id="update-title">Update column</h3>
                             </div>
                             <div class="block-content">
                                 <div class="form-group" style="width:80%;margin:0 auto;">
@@ -254,7 +254,7 @@
                                                 <li style="padding:10px;"><span class="font-w300">Field Type</span></li>
                                                 <li class="divider"></li>
                                                 {% for type in types %}
-                                                    <li class="column_types" style="cursor:pointer;padding:10px;position:sticky;z-index:700;{#{% if col['type'] == type['type'] %}border:1px solid #d3d3d3;border-radius:4px;background-color:#f5f5f5{% endif %}#}" onclick="UpdateColumn('{{ type['name'] }}', '{{ type['type'] }}');">
+                                                    <li class="column_types" style="cursor:pointer;padding:10px;position:sticky;z-index:700;" onclick="UpdateColumn('{{ type['name'] }}', '{{ type['type'] }}');">
                                                         <span id="{{ type['type'] }}" class="font-w300">{{ type['name'] }}</span>
                                                     </li>
                                                 {% endfor %}
@@ -649,7 +649,8 @@
             function Refresh(){
                 // Refresh the success message
                 var message = document.getElementById('success-message');
-                message.innerText.fontcolor('green');
+                message.style.removeProperty('color');
+                message.style.cssText += 'color:green;';
                 window.location.href='{{ url_for('user.sheet') }}';
             }
 
@@ -689,9 +690,11 @@
                 // If it's a new column that opened this modal, then clicking cancel will delete the column
                 if (e.relatedTarget.getAttribute('new-column') === "true"){
                     document.getElementById('cancel-update-column').setAttribute("delete-column", String(true));
+                    document.getElementById('update-title').innerText = 'Add a new column'
                 }
                 else{
                     document.getElementById('cancel-update-column').setAttribute("delete-column", String(false));
+                    document.getElementById('update-title').innerText = 'Update column'
                 }
 
                 // Save this button's id to the save button in the modal, so we can update the button as necessary
@@ -777,7 +780,7 @@
                     type: 'POST',
                     beforeSend: UpdateTitle(),
                     //beforeSend:$('#edit-column-modal').modal('toggle'),
-                    complete:$('#edit-column-modal').modal('toggle'),
+                    complete: UpdateModal(),
                     data: {'column_name': column_name, 'old_column_name': old_column_name, 'table_name': table_name, 'selected_type': selected_type},
                     success: function (response) {
                         if ('result' in response && response['result'] === true){
@@ -787,11 +790,19 @@
                             message.focus();
                             setTimeout(() => {  Refresh(); }, 1500);
                         }
+                        else{
+                            var message = document.getElementById('success-message');
+                            message.innerText = 'There was an error updating this column.';
+                            message.style.cssText += 'color:red;';
+                            message.style.visibility = 'visible';
+                            message.focus();
+                            setTimeout(() => {  Refresh(); }, 1500);
+                        }
                     },
                         error: function (xhr) {
                             var message = document.getElementById('success-message');
-                            message.innerText = 'There was an error updating column ' + old_column_name + '.';
-                            message.innerText.fontcolor('red');
+                            message.innerText = 'There was an error updating this column.';
+                            message.style.cssText += 'color:red;';
                             message.style.visibility = 'visible';
                             message.focus();
                             setTimeout(() => {  Refresh(); }, 1500);
@@ -837,7 +848,11 @@
                 }
 
                 setTimeout(() => {  UpdateTitle(); }, 500);
+            }
 
+            function UpdateModal(){
+                $('#edit-column-modal').modal('toggle');
+                document.getElementById('update-title').innerText = "Update column";
             }
         </script>
 
