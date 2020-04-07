@@ -175,6 +175,15 @@
                                 <li><a class="link-effect" href="">DataTables</a></li>
                             </ol>
                         </div>
+                        <div style="float:right;height:100%;margin-bottom:10px;max-width:800px;">
+                            {% for message in get_flashed_messages(with_categories=True) %}
+                                {% set category = 'danger' if message[0] == 'error' else 'success' %}
+                                <div class="ribbon-box btn-{{ category }} font-w600" style="padding:20px;min-height:56px !important;margin-top:-10px;position:relative">
+                                    {{ message[1] }}
+                                </div>
+                                {% if not loop.last %}<br />{% endif %}
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
                 <!-- END Page Header -->
@@ -638,7 +647,10 @@
         <!-- Miscellaneous helper functions -->
         <script type="text/javascript">
             function Refresh(){
-                window.location.href='{{ url_for('user.dashboard') }}';
+                // Refresh the success message
+                var message = document.getElementById('success-message');
+                message.innerText.fontcolor('green');
+                window.location.href='{{ url_for('user.sheet') }}';
             }
 
             function GenerateRowId(rows){
@@ -693,23 +705,30 @@
                 document.getElementById('column_name').value = name;
                 document.getElementById('old_column_name').value = name;
 
-                UpdateColumn(name, type, id);
+                UpdateColumn(name, type);
 
             });
 
             // When the edit column modal is hidden
             $('#edit-column-modal').on('hide.bs.modal', function (e) {
-                var input = document.getElementById('column_name');
+                var column_name = document.getElementById('column_name');
+                var column_type = document.getElementById('column_type');
                 var cancel_button = document.getElementById('cancel-update-column').getAttribute("delete-column");
 
+
+                // reset the styles on the inputs
+                column_name.style.removeProperty('background-color');
+                column_name.style.removeProperty('border');
+                column_name.cssText += 'border: 1px solid #d3d3d3';
+                column_type.style.removeProperty('background-color');
+
                 // Delete the column if the modal closes and it's a new column without a name
-                if (input.value === "" && cancel_button === "true"){
+                if (column_name.value === "" && cancel_button === "true"){
                    table.deleteColumn();
                 }
             });
 
-            function UpdateColumn(name, type, id){
-                //alert(name + '/' + type + '/' + id);
+            function UpdateColumn(name, type){
                 document.getElementById("selected_val").value = type;
                 var types = document.getElementsByClassName('column_types');
 
@@ -729,29 +748,54 @@
                         li.style.removeProperty('background-color');
                     }
                 }
-
-                {#if (set_type){
-                    table.options.columns[column].type = type;
-                }#}
             }
 
             function SaveColumn(sel){
-                document.getElementById(sel.getAttribute('edit-button-id')).setAttribute("new-column", String(false));
+                var col = document.getElementById('column_name');
+                var column_name = col.value;
 
-                var column_name = document.getElementById('column_name').value;
+                // if the column name is empty, then don't allow the user to save
+                if (column_name === ''){
+                    col.style.cssText += 'border:1px solid red; background-color:#ffcccb;';
+                    return;
+                }
+
+                // if the column name is empty, then don't allow the user to save
+                if (document.getElementById('column_type').value === ''){
+                    document.getElementById('column_type').style.cssText += 'border:1px solid red; background-color:#ffcccb;';
+                    return;
+                }
+
                 var old_column_name = document.getElementById('old_column_name').value;
                 var table_name = document.getElementById('table_name').value;
                 var selected_type = document.getElementById('selected_val').value;
+
+                document.getElementById(sel.getAttribute('edit-button-id')).setAttribute("new-column", String(false));
 
                 $.ajax({
                     url: '{{ url_for("user.update_column") }}',
                     type: 'POST',
                     beforeSend: UpdateTitle(),
                     //beforeSend:$('#edit-column-modal').modal('toggle'),
+                    complete:$('#edit-column-modal').modal('toggle'),
                     data: {'column_name': column_name, 'old_column_name': old_column_name, 'table_name': table_name, 'selected_type': selected_type},
                     success: function (response) {
-                        window.location.href = '{{ url_for('user.sheet') }}';
-                    }
+                        if ('result' in response && response['result'] === true){
+                            var message = document.getElementById('success-message');
+                            message.innerText = "Column '" + old_column_name + "' has been updated successfully.";
+                            message.style.visibility = 'visible';
+                            message.focus();
+                            setTimeout(() => {  Refresh(); }, 1500);
+                        }
+                    },
+                        error: function (xhr) {
+                            var message = document.getElementById('success-message');
+                            message.innerText = 'There was an error updating column ' + old_column_name + '.';
+                            message.innerText.fontcolor('red');
+                            message.style.visibility = 'visible';
+                            message.focus();
+                            setTimeout(() => {  Refresh(); }, 1500);
+                        }
                 });
 
             }
@@ -782,14 +826,14 @@
                 var title = document.getElementById('update-title');
 
                 if (!title.innerText.includes('.')){
-                    title.innerText = 'Updating column.';
+                    title.innerText = 'Updating column in the database.';
                 }
 
                 if (!title.innerText.endsWith('....')){
                     title.innerText += '.';
                 }
                 else {
-                    title.innerText = 'Updating column.';
+                    title.innerText = 'Updating column in the database.';
                 }
 
                 setTimeout(() => {  UpdateTitle(); }, 500);

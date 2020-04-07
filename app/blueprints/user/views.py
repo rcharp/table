@@ -367,13 +367,12 @@ def update_column():
                 table = request.form['table_name']
 
                 from app.blueprints.api.api_functions import update_column
-                update_column(table, col, old, type)
-                flash('Table has been updated.', 'success')
-                return redirect(url_for('user.sheet'))
+                result = update_column(table, col, old, type)
+
+                return jsonify({'result': result})
     except Exception as e:
         print_traceback(e)
-        flash('There was an error.', 'error')
-    return redirect(url_for('user.dashboard'))
+        return jsonify({'result': False})
 
 
 @user.route('/delete_column', methods=['GET','POST'])
