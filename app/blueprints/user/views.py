@@ -291,6 +291,24 @@ def sheet():
 
 
 # Actions -------------------------------------------------------------------
+@user.route('/create_table', methods=['GET','POST'])
+@csrf.exempt
+def create_table():
+    if request.method == 'POST':
+        if 'table_name' in request.form:
+            try:
+                from app.blueprints.api.api_functions import create_table
+                table_name = request.form['table_name']
+                create_table(table_name, current_user.id)
+
+                return redirect(url_for('user.dashboard'))
+            except Exception as e:
+                print_traceback(e)
+
+        return redirect(url_for('user.dashboard'))
+    return render_template('user/dashboard.html', current_user=current_user)
+
+
 @user.route('/update_table', methods=['GET','POST'])
 @csrf.exempt
 def update_table():
@@ -350,8 +368,11 @@ def update_column():
 
                 from app.blueprints.api.api_functions import update_column
                 update_column(table, col, old, type)
+                flash('Table has been updated.', 'success')
+                return redirect(url_for('user.sheet'))
     except Exception as e:
         print_traceback(e)
+        flash('There was an error.', 'error')
     return redirect(url_for('user.dashboard'))
 
 

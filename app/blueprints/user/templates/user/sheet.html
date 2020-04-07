@@ -217,7 +217,7 @@
         <div class="modal in" id="edit-column-modal" tabindex="-1" role="dialog" aria-hidden="true">
             <div class="modal-dialog" style="width:500px;height:200px;">
                 <div class="modal-content">
-                    <form class="form-horizontal push-5-t" action="{{ url_for('user.update_column' ) }}" method="post">
+                    {#<form class="form-horizontal push-5-t" action="{{ url_for('user.update_column') }}" method="post">#}
                         <div class="block block-themed block-transparent remove-margin-b">
                             <div class="block-header bg-primary-dark">
                                 <ul class="block-options">
@@ -225,7 +225,7 @@
                                         <button data-dismiss="modal" type="button"><i class="si si-close"></i></button>
                                     </li>
                                 </ul>
-                                <h3 class="block-title">Update Column</h3>
+                                <h3 class="font-w300 text-white" id="update-title">Update Column</h3>
                             </div>
                             <div class="block-content">
                                 <div class="form-group" style="width:80%;margin:0 auto;">
@@ -268,7 +268,7 @@
                                 <button class="btn btn-sm btn-primary" type="submit" id="save-update-column" onclick="SaveColumn(this);"><i class="fa fa-check"></i> Save</button>
                             </div>
                         </div>
-                    </form>
+                    {#</form>#}
                 </div>
             </div>
         </div>
@@ -736,8 +736,26 @@
             }
 
             function SaveColumn(sel){
-                document.getElementById(sel.getAttribute('edit-button-id').setAttribute("new-column", String(false)));
+                document.getElementById(sel.getAttribute('edit-button-id')).setAttribute("new-column", String(false));
+
+                var column_name = document.getElementById('column_name').value;
+                var old_column_name = document.getElementById('old_column_name').value;
+                var table_name = document.getElementById('table_name').value;
+                var selected_type = document.getElementById('selected_val').value;
+
+                $.ajax({
+                    url: '{{ url_for("user.update_column") }}',
+                    type: 'POST',
+                    beforeSend: UpdateTitle(),
+                    //beforeSend:$('#edit-column-modal').modal('toggle'),
+                    data: {'column_name': column_name, 'old_column_name': old_column_name, 'table_name': table_name, 'selected_type': selected_type},
+                    success: function (response) {
+                        window.location.href = '{{ url_for('user.sheet') }}';
+                    }
+                });
+
             }
+
             function RowSelected() {
                 var checkedBoxes = document.querySelectorAll('input[class=select-box]:checked').length;
 
@@ -759,6 +777,24 @@
                 today = mm + '/' + dd + '/' + yyyy;
                 return today;
             }
+
+            function UpdateTitle(){
+                var title = document.getElementById('update-title');
+
+                if (!title.innerText.includes('.')){
+                    title.innerText = 'Updating column.';
+                }
+
+                if (!title.innerText.endsWith('....')){
+                    title.innerText += '.';
+                }
+                else {
+                    title.innerText = 'Updating column.';
+                }
+
+                setTimeout(() => {  UpdateTitle(); }, 500);
+
+            }
         </script>
 
 
@@ -772,6 +808,9 @@
                         type: 'POST',
                         data: {'col': JSON.stringify(col_name)},
                         success: function (response) {
+                            window.location.href='{{ url_for('user.dashboard') }}';
+                        },
+                        error: function (xhr) {
                             window.location.href='{{ url_for('user.dashboard') }}';
                         }
                     });
