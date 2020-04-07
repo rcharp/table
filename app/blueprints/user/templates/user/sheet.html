@@ -370,10 +370,14 @@
                 }
 
                 // Create the edit button for the headers
-                for (var i = 2; i< headers.length; i++){
-                    var button = CreateChangeTypeButton(headers[i]);
-                    var div = CreateChangeTypeDiv(button);
-                    headers[i].appendChild(div);
+                for (var i = 1; i< headers.length; i++){
+                    // only create edit buttons for headers that aren't readOnly.
+                    // We use +1 here since the data columns and the headers are offset by 1
+                    if (!table.options.columns[i-1].readOnly === true && headers[i].innerText !== ''){
+                        var button = CreateChangeTypeButton(headers[i]);
+                        var div = CreateChangeTypeDiv(button);
+                        headers[i].appendChild(div);
+                    }
                 }
 
                 // Miscellaneous styling and creations
@@ -559,7 +563,7 @@
                     rows_to_delete.push(item_id);
                 }
 
-                if (confirm("Are you sure you want to delete " + count + " rows? This can't be undone.")){
+                if (confirm("Are you sure you want to delete " + count + " row(s)? This can't be undone.")){
                     // Delete the rows
                     $.ajax({
                         url: '{{ url_for("user.delete_rows") }}',
@@ -567,7 +571,7 @@
                         data: {'rows': JSON.stringify(rows_to_delete)},
                         success: function (response) {
                             var message = document.getElementById('success-message');
-                            message.innerText = count + ' rows have been deleted successfully.';
+                            message.innerText = count + ' row(s) have been deleted successfully.';
                             message.style.visibility = 'visible';
                             message.focus();
                             setTimeout(() => {  Refresh(); }, 1500);
@@ -592,8 +596,8 @@
 
                 // Add the new row button
                 var new_button = document.createElement('i');
-                new_button.className = "si si-plus";
-                new_button.style.cssText = "cursor:pointer;transform:scale(5)";
+                new_button.className = "si si-plus fa-lg";
+                new_button.style.cssText = "cursor:pointer;";
                 new_button.onclick=function(){AddRow()};
                 cell.appendChild(new_button);
 
@@ -606,14 +610,14 @@
 
                 var new_column = document.getElementById("AddColumnButton");
 
-                // Add the new row button
+                // Add the new column button
                 var new_button = document.createElement('i');
-                new_button.className = "si si-plus";
+                new_button.className = "si si-plus fa-lg";
                 new_button.id = 'add-column-button';
                 new_column.appendChild(new_button);
 
                 new_column.className = 'text-center';
-                new_column.style.cssText = "padding-top:20px;cursor:pointer; border:1px solid #d3d3d3;border-radius:4px;width:65px;height:" + height + "px; position:absolute;top:1px;right:-55px;";
+                new_column.style.cssText = "padding-top:17px;cursor:pointer; border:1px solid #d3d3d3;border-radius:4px;width:65px;height:" + height + "px; position:absolute;top:1px;right:-55px;";
                 new_column.onclick=function(){AddColumn()};
             }
 
