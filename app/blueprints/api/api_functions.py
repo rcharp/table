@@ -37,7 +37,7 @@ def get_rows(d, limit=None):
     rows = list()
 
     # Get the rows and the columns
-    domains = db.session.query(d).limit(limit).all()
+    domains = db.session.query(d).limit(limit).all() if limit is not None else db.session.query(d).all()
     columns = d.columns
 
     for domain in domains:

@@ -238,23 +238,17 @@ def dashboard():
     table_name = 'domains'
     table = get_table(table_name)
 
-    l = True
+    l = False
     limit = 10
 
     limit = None if not l else limit
 
     rows = get_rows(table, limit)
-    cols = get_columns(table)
-
-    types = get_col_types()
-    row_id = generate_id()
 
     return render_template('user/dashboard.html', current_user=current_user,
-                           cols=cols,
-                           rows=rows,
                            table_name=table_name,
-                           types=types,
-                           new_row_id=row_id)
+                           row_count=len(rows)
+                           )
 
 
 # View Sheet -------------------------------------------------------------------
@@ -271,7 +265,7 @@ def sheet():
     table_name = 'domains'
     table = get_table(table_name)
 
-    l = True
+    l = False
     limit = 10
 
     limit = None if not l else limit
@@ -287,7 +281,8 @@ def sheet():
                            rows=rows,
                            table_name=table_name,
                            types=types,
-                           new_row_id=row_id)
+                           new_row_id=row_id,
+                           row_count=len(rows))
 
 
 # Actions -------------------------------------------------------------------

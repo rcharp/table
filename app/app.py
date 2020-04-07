@@ -353,7 +353,7 @@ def today_filter(arg):
 
 
 def site_name_filter(arg):
-    return 'NameCatcher.io'
+    return 'LiteSheets.io'
 
 
 def site_color_filter(arg):

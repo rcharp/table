@@ -73,7 +73,7 @@
 
             'header-navbar-fixed'        Enables fixed header
         -->
-        <div id="page-container" class="header-navbar-fixed">
+        <div id="page-container" class="header-navbar-fixed" style="height:100%;">
 
             <!-- Header -->
             <header id="header-navbar" class="content-mini content-mini-full">
@@ -154,15 +154,22 @@
                             </div>
                         </form>
                     </li>
+                    <li>
+                        <div class="col-sm-7">
+                            <h1 class="page-heading">
+                                <a href="{{ url_for('user.dashboard') }}">{{ table_name.replace('_',' ')|capitalize }}</a>
+                            </h1>
+                        </div>
+                    </li>
                 </ul>
                 <!-- END Header Navigation Left -->
             </header>
             <!-- END Header -->
 
             <!-- Main Container -->
-            <main id="main-container">
+            <main id="main-container" style="height:100%;overflow:hidden;">
                 <!-- Page Header -->
-                <div class="content bg-gray-lighter">
+                {#<div class="content bg-gray-lighter">
                     <div class="row items-push">
                         <div class="col-sm-7">
                             <h1 class="page-heading">
@@ -185,23 +192,24 @@
                             {% endfor %}
                         </div>
                     </div>
-                </div>
+                </div>#}
                 <!-- END Page Header -->
 
                 <!-- Page Content -->
-                <div class="content" style="width:100%;padding:0">
+                <div class="content" style="padding:0;width:100%;height:100%;overflow:hidden;">
                     <!-- Dynamic Table Full Pagination -->
-                    <div class="block">
-                        <div class="block-content" style="padding-left:0;">
+                    {#<div class="block" style="height:100%;">
+                        <div class="block-content" style="padding-left:0;height:100%;">#}
                             <span id="success-message" style="margin-left:10px;visibility:hidden;color:green;font-size:14px;">Table updated successfully.</span><br /><br />
                             <span id="delete-selected" class="font-w300" style="cursor:pointer;margin-left:15px;margin-bottom:10px;visibility:hidden;color:red; border:1px solid red;border-radius:4px;padding:10px;" onclick="DeleteRows()"><i class="fa fa-trash-o" style="margin-right:10px;"></i>Delete <span id="selected_rows">0</span> selected row(s)</span><br /><br />
-                            <div id="jtable-wrapper" name="wrapper" style="overflow-x:scroll">
-                                <div id="jtable" style="position:relative">
+                            <div id="jtable-wrapper" name="wrapper" style="padding:0 10px 10px 10px;overflow:scroll;height:100vh;">
+                                <div id="jtable" style="position:relative;">
                                     <div id="AddColumnButton" tabindex="1"></div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                            <small style="margin:20px 0 0 20px;">{{ row_count }} rows</small>
+                        {#</div>
+                    </div>#}
                     <!-- END Dynamic Table Full Pagination -->
                 </div>
                 <!-- END Page Content -->
@@ -209,14 +217,14 @@
             <!-- END Main Container -->
 
             <!-- Footer -->
-            <footer id="page-footer" class="content-mini content-mini-full font-s12 bg-gray-lighter clearfix" style="background-color:#0073ff">
+            {#<footer id="page-footer" class="content-mini content-mini-full content- font-s12 bg-gray-lighter clearfix text-white" style="background-color:#0073ff;margin-bottom:0;">
                 <div class="pull-right">
                     <a href="{{ url_for('user.contact') }}">Contact Us</a> | <a href="{{ url_for('page.privacy') }}">Privacy Policy</a> | <a href="{{ url_for('page.terms') }}">Terms of Service</a>
                 </div>
                 <div class="pull-left">
                     <a class="font-w600" href="http://goo.gl/6LF10W" target="_blank">OneUI 3.1</a> &copy; <span class="js-year-copy"></span>
                 </div>
-            </footer>
+            </footer>#}
             <!-- END Footer -->
         </div>
         <!-- END Page Container -->
@@ -393,13 +401,23 @@
                 var last_row = rows[row_length - 1];
                 var columns = last_row.getElementsByTagName('td');
                 for (var i = 0; i < columns.length; i++) {
-                    columns[i].className = 'font-w300 row-item';
-                    columns[i].style.cssText = 'height:35px;background-color:white;vertical-align:middle;min-width:300px;padding:5px 10px 5px 10px;';
+
+                    // Set the basic style on the cell
+                    columns[i].style.cssText = 'height:45px;vertical-align:middle;padding:5px 10px 5px 10px;';
+
+                    // The first column and the others get different style
+                    if (i === 0){
+                        columns[i].className = 'row-item';
+                    }
+                    else{
+                        columns[i].className = 'font-w300 row-item';
+                        columns[i].style.cssText += 'font-weight:300 !important;text-align:left;background-color:white;';
+                    }
                 }
 
                 // Create the select boxes and the new Add Row button
                 StyleCheckBoxes(last_row);
-                CreateNewRowButton(document.getElementById('jtable'));
+                return CreateNewRowButton(document.getElementById('jtable'));
             }
 
             // Styles the last column
@@ -517,10 +535,13 @@
                 table.insertRow();
 
                 // Style the new row
-                StyleLastRow();
+                var b = StyleLastRow();
 
                 // Generate the new row id
                 GenerateRowId(rows);
+
+                // focus on the last row
+                b.focus();
 
             }
 
@@ -600,6 +621,8 @@
                 new_button.style.cssText = "cursor:pointer;";
                 new_button.onclick=function(){AddRow()};
                 cell.appendChild(new_button);
+
+                return new_button;
 
             }
 
