@@ -265,7 +265,7 @@ def sheet():
     table_name = 'domains'
     table = get_table(table_name)
 
-    l = False
+    l = True
     limit = 10
 
     limit = None if not l else limit

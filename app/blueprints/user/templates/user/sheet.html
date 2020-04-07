@@ -197,35 +197,19 @@
 
                 <!-- Page Content -->
                 <div class="content" style="padding:0;width:100%;height:100%;overflow:hidden;">
-                    <!-- Dynamic Table Full Pagination -->
-                    {#<div class="block" style="height:100%;">
-                        <div class="block-content" style="padding-left:0;height:100%;">#}
-                            <span id="success-message" style="margin-left:10px;visibility:hidden;color:green;font-size:14px;">Table updated successfully.</span><br /><br />
-                            <span id="delete-selected" class="font-w300" style="cursor:pointer;margin-left:15px;margin-bottom:10px;visibility:hidden;color:red; border:1px solid red;border-radius:4px;padding:10px;" onclick="DeleteRows()"><i class="fa fa-trash-o" style="margin-right:10px;"></i>Delete <span id="selected_rows">0</span> selected row(s)</span><br /><br />
-                            <div id="jtable-wrapper" name="wrapper" style="padding:0 10px 10px 10px;overflow:scroll;height:100vh;">
-                                <div id="jtable" style="position:relative;">
-                                    <div id="AddColumnButton" tabindex="1"></div>
-                                </div>
-                            </div>
-                            <small style="margin:20px 0 0 20px;">{{ row_count }} rows</small>
-                        {#</div>
-                    </div>#}
+                    <span id="success-message" style="margin-left:10px;visibility:hidden;color:green;font-size:14px;">Table updated successfully.</span><br /><br />
+                    <span id="delete-selected" class="font-w300" style="cursor:pointer;margin-left:15px;margin-bottom:10px;visibility:hidden;color:red; border:1px solid red;border-radius:4px;padding:10px;" onclick="DeleteRows()"><i class="fa fa-trash-o" style="margin-right:10px;"></i>Delete <span id="selected_rows">0</span> selected row(s)</span><br /><br />
+                    <div id="jtable-wrapper" name="wrapper" style="padding:0 10px 10px 10px;overflow:scroll;height:100vh;">
+                        <div id="jtable" style="position:relative;">
+                            <div id="AddColumnButton" tabindex="1"></div>
+                        </div>
+                    </div>
+                    <small style="margin:20px 0 0 20px;">{{ row_count }} rows</small>
                     <!-- END Dynamic Table Full Pagination -->
                 </div>
                 <!-- END Page Content -->
             </main>
             <!-- END Main Container -->
-
-            <!-- Footer -->
-            {#<footer id="page-footer" class="content-mini content-mini-full content- font-s12 bg-gray-lighter clearfix text-white" style="background-color:#0073ff;margin-bottom:0;">
-                <div class="pull-right">
-                    <a href="{{ url_for('user.contact') }}">Contact Us</a> | <a href="{{ url_for('page.privacy') }}">Privacy Policy</a> | <a href="{{ url_for('page.terms') }}">Terms of Service</a>
-                </div>
-                <div class="pull-left">
-                    <a class="font-w600" href="http://goo.gl/6LF10W" target="_blank">OneUI 3.1</a> &copy; <span class="js-year-copy"></span>
-                </div>
-            </footer>#}
-            <!-- END Footer -->
         </div>
         <!-- END Page Container -->
 
@@ -376,6 +360,10 @@
                     headers[i].className = 'font-w300 header-item';
                     headers[i].style.cssText = 'height:55px;background-color:white;vertical-align:middle;width:300px;text-transform:none;padding:5px 10px 5px 10px;';
                 }
+
+                // Add a select all checkbox to the first column
+                var select_all_header = document.getElementsByClassName('header-item')[1];
+                CreateSelectAllBox(select_all_header);
 
                 // Create the edit button for the headers
                 for (var i = 1; i< headers.length; i++){
@@ -880,6 +868,30 @@
             function UpdateModal(){
                 $('#edit-column-modal').modal('toggle');
                 document.getElementById('update-title').innerText = "Update column";
+            }
+
+            function CreateSelectAllBox(select_all_header){
+                var wrapper = document.createElement('label');
+                wrapper.className = "css-input css-checkbox css-checkbox-sm css-checkbox-primary";
+
+                var checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = 'select-all-box';
+                checkbox.className = 'select-all-box';
+                checkbox.onclick=function(){SelectAll(this)};
+
+                // set checkbox as child of wrapper
+                wrapper.appendChild(checkbox);
+                wrapper.appendChild(document.createElement('span'));
+
+                select_all_header.appendChild(wrapper);
+
+                // style the checkbox's header div
+                wrapper.parentElement.classList += ' text-center';
+                wrapper.parentElement.style.removeProperty('text-align');
+                wrapper.parentElement.style.removeProperty('background-color');
+                wrapper.parentElement.style.cssText += 'background-color:white';
+
             }
         </script>
 
