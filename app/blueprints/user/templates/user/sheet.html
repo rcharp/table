@@ -191,15 +191,17 @@
                 <!-- END Page Header -->
 
                 <!-- Page Content -->
-                <div class="content" style="padding:0;width:100%;height:100%;overflow:hidden;">
-                    <span id="success-message" style="margin-left:10px;visibility:hidden;color:green;font-size:14px;">Table updated successfully.</span><br /><br />
+                <div class="content" style="padding:15px 0 0 0;width:100%;height:100%;overflow:hidden;">
+                    <div class="pull-right">
+                        <span id="success-message" style="margin-left:10px;visibility:hidden;color:green;font-size:14px;">Table updated successfully.</span><br /><br />
+                    </div>
                     <span id="delete-selected" class="font-w300" style="cursor:pointer;margin-left:15px;margin-bottom:10px;visibility:hidden;color:red; border:1px solid red;border-radius:4px;padding:10px;" onclick="DeleteRows()"><i class="fa fa-trash-o" style="margin-right:10px;"></i>Delete <span id="selected_rows">0</span> selected row(s)</span><br /><br />
                     <div id="jtable-wrapper" name="wrapper" style="padding:0 10px 10px 10px;overflow:scroll;height:100vh;">
                         <div id="jtable" style="position:relative;">
                             <div id="AddColumnButton" tabindex="1"></div>
                         </div>
                     </div>
-                    <small style="margin:20px 0 0 20px;">{{ row_count }} rows</small>
+                    <h5 class="font-w300" id="row-count" style="padding:15px 0 0 20px;">{{ row_count }} rows</h5>
                     <!-- END Dynamic Table Full Pagination -->
                 </div>
                 <!-- END Page Content -->
@@ -536,6 +538,10 @@
                 // Generate the new row id
                 GenerateRowId(rows);
 
+                // Update the row count
+                var count = parseInt('{{ row_count }}') + 1;
+                document.getElementById('row-count').innerText = count + ' rows';
+
                 // focus on the last row
                 b.focus();
 
@@ -712,12 +718,17 @@
                                 type: 'POST',
                                 data: {'row-id': new_id},
                                 success: function (response) {
-                                    var idColumnIndex = GetColumnIndex("Record Id");
-                                    var createdColumnIndex = GetColumnIndex("Created On");
-                                    var updatedColumnIndex = GetColumnIndex("Last Updated");
-                                    rows[rows.length - 2].cells[idColumnIndex].innerText = new_id;
-                                    rows[rows.length - 2].cells[createdColumnIndex].innerText = GetTodayDate();
-                                    rows[rows.length - 2].cells[updatedColumnIndex].innerText = GetTodayDate();
+                                    try{
+                                        var idColumnIndex = GetColumnIndex("Record Id");
+                                        var createdColumnIndex = GetColumnIndex("Created On");
+                                        var updatedColumnIndex = GetColumnIndex("Last Updated");
+                                        rows[rows.length - 2].cells[idColumnIndex].innerText = new_id;
+                                        rows[rows.length - 2].cells[createdColumnIndex].innerText = GetTodayDate();
+                                        rows[rows.length - 2].cells[updatedColumnIndex].innerText = GetTodayDate();
+                                    } catch(err){
+                                        rows[rows.length - 1].remove();
+                                    }
+
                                 },
                                 error: function (xhr) {
                                     rows[rows.length - 1].remove();
@@ -766,7 +777,7 @@
                 // reset the styles on the inputs
                 column_name.style.removeProperty('background-color');
                 column_name.style.removeProperty('border');
-                column_name.cssText += 'border: 1px solid #d3d3d3';
+                column_name.style.cssText += 'border: 1px solid #d3d3d3';
                 column_type.style.removeProperty('background-color');
 
                 // Delete the column if the modal closes and it's a new column without a name

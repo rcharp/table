@@ -183,6 +183,9 @@
                 </div>
                 <!-- Page Content -->
                 <div class="content" style="min-height:1000px;">
+                    <div class="pull-right">
+                        <span id="success-message" style="margin-left:10px;visibility:hidden;color:green;font-size:14px;">Table created successfully.</span><br /><br />
+                    </div>
                     <!-- Start Content -->
                     <div class="row" style="margin-bottom:150px;">
                         <div class="col-md-4" style="width:80%; margin:0 auto; margin-top:50px; min-width:450px; float:none;">
@@ -204,9 +207,9 @@
                                     <div class="tab-pane active" id="check" name="check" style="min-height:250px;overflow:hidden">
                                         <div class="col-lg-8" style="width:100%; margin:0 auto; float:none;">
                                             <!-- Bootstrap Login -->
-                                            <div class="block block-themed">
+                                            <div class="block block-themed" id="table-list">
                                                 {% for table in tables %}
-                                                    <div class="row">
+                                                    <div class="row table-item" style="margin-bottom:10px;">
                                                         <div style="width:60%">
                                                             <a class="block block-rounded block-link-hover3" style="cursor:pointer;" onclick="LoadTable('{{ table['name'] }}');">
                                                                 <div class="block-content block-content-full clearfix" style="border:1px solid #d3d3d3;border-radius:4px;">
@@ -214,8 +217,8 @@
                                                                         <span class="font-w300 text-primary" id="load-message" style="display:none"></span>
                                                                     </div>
                                                                     <div class="pull-left push-10-t">
-                                                                        <div class="font-w600 push-5">{{ table['name']|capitalize }}</div>
-                                                                        <div class="text-muted">{{ table['count'] }} rows</div>
+                                                                        <div class="font-w600 push-5 table_name" id="table_name">{{ table['name']|capitalize }}</div>
+                                                                        <div class="text-muted row_count" id="row_count">{{ table['count'] }} rows</div>
                                                                     </div>
                                                                 </div>
                                                             </a>
@@ -256,7 +259,7 @@
         <div class="modal in" id="new-table-modal" tabindex="-1" role="dialog" aria-hidden="true">
             <div class="modal-dialog" style="width:500px;height:200px;">
                 <div class="modal-content">
-                    <form class="form-horizontal push-5-t" action="{{ url_for('user.create_table' ) }}" method="post">
+                    {#<form class="form-horizontal push-5-t" action="{{ url_for('user.create_table' ) }}" method="post">#}
                         <div class="block block-themed block-transparent remove-margin-b">
                             <div class="block-header bg-primary-dark">
                                 <h3 class="block-title">Create a new table</h3>
@@ -264,8 +267,8 @@
                             <div class="block-content">
                                 <div class="form-group" style="width:100%;margin:0 auto;">
                                     <div class="input-group">
-                                        <label for="table_name">Table Name</label>
-                                        <input required class="contact" autofocus type="text" id="table_name" name="table_name" value="" style="box-sizing: border-box;width:100%; border:1px solid #d3d3d3;height:30px;border-radius:0;" />
+                                        <label for="new_table_name">Table Name</label>
+                                        <input required class="contact" autofocus type="text" id="new_table_name" name="new_table_name" value="" style="box-sizing: border-box;width:100%; border:1px solid #d3d3d3;height:30px;border-radius:0;" />
                                     </div>
                                     <br /><br />
                                 </div>
@@ -274,10 +277,10 @@
                         <div class="modal-footer">
                             <div class="form-group" style="padding-right:20px;">
                                 <button class="btn btn-sm btn-default" style="width:100px;" type="button" id="cancel-button" data-dismiss="modal">Cancel</button>
-                                <button class="btn btn-sm btn-primary" style="width:100px;" type="submit" id="create-table-button">Continue</button>
+                                <button class="btn btn-sm btn-primary" style="width:100px;" type="submit" id="create-table-button" onclick="CreateTable();">Continue</button>
                             </div>
                         </div>
-                    </form>
+                    {#</form>#}
                 </div>
             </div>
         </div>
@@ -347,6 +350,74 @@
             function OpenModal(){
                 var button = document.getElementById('create-new-button');
                 $('#new-table-modal').modal('toggle', button);
+            }
+
+            // When the edit column modal is hidden
+            $('#new-table-modal').on('hide.bs.modal', function (e) {
+
+                var new_table = document.getElementById('new_table_name');
+
+                // reset the styles on the input
+                new_table.style.removeProperty('background-color');
+                new_table.style.removeProperty('border');
+                new_table.style.cssText += 'border: 1px solid #d3d3d3';
+                new_table.value = '';
+            });
+
+            function CreateTable(){
+                var new_table = document.getElementById('new_table_name');
+                if (new_table.value === ''){
+                    new_table.style.cssText += 'border:1px solid red; background-color:#ffcccb;';
+                    return;
+                }
+
+                try{
+                    $.ajax({
+                        url: '{{ url_for("user.create_table") }}',
+                        type: 'POST',
+                        beforeSend: CreateTableListItem(),
+                        complete: $('#new-table-modal').modal('toggle'),
+                        data: {'table_name': document.getElementById('new_table_name').value},
+                        success: function (response) {
+                            if ('result' in response && response['result'] === true){
+                                var message = document.getElementById('success-message');
+                                message.style.visibility = 'visible';
+                                setTimeout(() => {  HideSuccessMessage(); }, 4000);
+                            }
+                            else{
+                                window.location.href = '{{ url_for('user.dashboard') }}';
+                            }
+                        },
+                            error: function (xhr) {
+                                window.location.href = '{{ url_for('user.dashboard') }}';
+                            }
+                    });
+                } catch(err){
+                    window.location.href = '{{ url_for('user.dashboard') }}';
+                }
+
+            }
+
+            function CreateTableListItem(){
+                var table_name = document.getElementById('new_table_name').value;
+                var table_item = document.getElementsByClassName('table-item')[0].cloneNode(true);
+
+                var link = table_item.getElementsByTagName('a')[0];
+                link.removeAttribute('onclick');
+                link.setAttribute('onclick', "LoadTable('" + table_name + "');");
+                document.getElementById('table-list').appendChild(table_item);
+
+                var name = table_item.getElementsByClassName('table_name')[0];
+                var count = table_item.getElementsByClassName('row_count')[0];
+
+                // Rename the table and count
+                name.innerText = table_name;
+                count.innerText = '0 rows';
+            }
+
+            // Hides the success message after the table has been updated.
+            function HideSuccessMessage() {
+                document.getElementById('success-message').style.visibility = 'hidden';
             }
         </script>
 

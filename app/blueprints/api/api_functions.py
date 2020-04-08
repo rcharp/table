@@ -114,7 +114,25 @@ def get_columns(d):
 
 # Update Table *******************************************
 def create_table(table_name, user_id):
-    return
+    import mysql.connector
+
+    mydb = mysql.connector.connect(
+        host=current_app.config.get('SQLALCHEMY_HOST'),
+        user=current_app.config.get('SQLALCHEMY_USER'),
+        passwd=current_app.config.get('SQLALCHEMY_PASSWORD'),
+        database=current_app.config.get('SQLALCHEMY_DATABASE')
+    )
+    mycursor = mydb.cursor()
+
+    mycursor.execute("CREATE TABLE %s (name VARCHAR(255), address VARCHAR(255))", table_name)
+
+    # conn = db.create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI'), connect_args={'connect_timeout': 300}, pool_timeout=300, pool_recycle=3600)
+    # metadata = MetaData()
+    # t = Table(table_name, metadata,
+    #           Column('id', Integer, primary_key=True),
+    #           )
+    # metadata.create_all(conn)
+    return True
 
 
 def update_row(id, val, col):

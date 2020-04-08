@@ -256,13 +256,13 @@ def table(table_name):
     # table_name = 'domains'
     table = get_table(table_name)
 
-    l = False
-    limit = 50
+    limit = True
+    lim = 50
 
-    limit = None if not l else limit
+    lim = None if not limit else lim
 
     cols, columns = get_columns(table)
-    rows = get_rows(table, columns, limit)
+    rows = get_rows(table, columns, lim)
 
     types = get_col_types()
     row_id = generate_id()
@@ -285,9 +285,9 @@ def create_table():
             try:
                 from app.blueprints.api.api_functions import create_table
                 table_name = request.form['table_name']
-                create_table(table_name, current_user.id)
 
-                return redirect(url_for('user.dashboard'))
+                result = create_table(table_name, current_user.id)
+                return jsonify({'result': result})
             except Exception as e:
                 print_traceback(e)
 
