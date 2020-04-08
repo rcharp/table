@@ -8,7 +8,8 @@ import datetime
 from app.app import create_app
 from app.extensions import db
 from app.blueprints.user.models import User
-from app.blueprints.billing.models.customer import Customer
+# from app.blueprints.billing.models.customer import Customer
+from app.blueprints.api.models.tables import Table
 from app.blueprints.api.models.domains import Domain
 from importlib import import_module
 from app.blueprints.api.api_functions import print_traceback
@@ -99,7 +100,7 @@ def seed_domains():
     available = datetime.datetime(2020, 4, 1).date()
     domains = ['backflip.io', 'instructor.io', 'photocamp.io', 'jobscape.io', 'creativedesign.io', 'budgetplanner.io', 'userflows.io']
 
-    for x in range(672):
+    for x in range(283):
         d = {
             'user_id': 1,
             'customer_id': app.config['SEED_CUSTOMER_ID'],
@@ -135,7 +136,7 @@ def reset(ctx, with_testdb):
     """
     ctx.invoke(init, with_testdb=with_testdb)
     ctx.invoke(seed)
-    ctx.invoke(seed_customer)
+    # ctx.invoke(seed_customer)
     ctx.invoke(seed_domains)
 
     return None

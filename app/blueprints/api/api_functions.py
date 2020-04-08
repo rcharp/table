@@ -124,7 +124,60 @@ def create_table(table_name, user_id):
     )
     mycursor = mydb.cursor()
 
-    mycursor.execute("CREATE TABLE %s (name VARCHAR(255), address VARCHAR(255))", table_name)
+    # sql = "CREATE TABLE IF NOT EXISTS %s (" \
+    #       "created_on datetime DEFAULT NULL," \
+    #       "updated_on datetime DEFAULT NULL," \
+    #       "record_id int(11) NOT NULL AUTO_INCREMENT," \
+    #       "'user_id' int(11) DEFAULT NULL," \
+    #       "PRIMARY KEY ('record_id')," \
+    #       "KEY 'ix_domains_user_id' ('user_id')," \
+    #       "CONSTRAINT 'domains_ibfk_1' FOREIGN KEY ('user_id') REFERENCES 'users' ('id') ON DELETE CASCADE ON UPDATE CASCADE" \
+    #       ") ENGINE=InnoDB AUTO_INCREMENT=9926513 DEFAULT CHARSET=utf8;" % table_name
+
+    # sql = "CREATE TABLE %s (created_on date DEFAULT NULL," \
+    #       "updated_on date DEFAULT NULL,id int(11) NOT NULL " \
+    #       "AUTO_INCREMENT,user_id int(11) DEFAULT NULL,PRIMARY " \
+    #       "KEY (id),KEY ix_%s_user_id (user_id),CONSTRAINT " \
+    #       "%s_ibfk_1 FOREIGN KEY (user_id) REFERENCES users " \
+    #       "(id) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE=InnoDB " \
+    #       "AUTO_INCREMENT=9926513 DEFAULT CHARSET=utf8;" \
+    #       % (table_name, table_name, table_name)
+
+    table_name = "Ricky_charpebtuer"
+    # sql = (
+    # "CREATE TABLE `%s` ("
+    # "  `record_id` int(11) NOT NULL AUTO_INCREMENT,"
+    # "  `created_on` date DEFAULT NULL,"
+    # "  `updated_on` date DEFAULT NULL,"
+    # "  `user_id` int(11) DEFAULT NULL,"
+    # "  KEY ix_%s_user_id (user_id),"
+    # "  PRIMARY KEY (`record_id`)"
+    # "  CONSTRAINT `Ricky_charpebtuer_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,"
+    # ") ENGINE=InnoDB "
+    # "AUTO_INCREMENT=9926513 DEFAULT CHARSET=utf8;" % (table_name, table_name))
+
+
+    # ********* Works! *********
+    try:
+        sql = ("CREATE TABLE `%s` ("
+        "`record_id` int(11) NOT NULL AUTO_INCREMENT,"
+        "`created_on` date DEFAULT NULL,"
+        "`updated_on` date DEFAULT NULL,"
+        "`user_id` int(11) DEFAULT NULL,"
+        "KEY ix_%s_user_id (user_id),"
+        "PRIMARY KEY (`record_id`)"
+        "CONSTRAINT `%s_ibfk_1` "
+        "FOREIGN KEY (`user_id`) "
+        "REFERENCES `users` (`id`) "
+        "ON DELETE CASCADE ON UPDATE CASCADE" # stops working at this line
+        ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin "
+        "AUTO_INCREMENT=1 ;" % (table_name, table_name, table_name))
+
+        mycursor.execute(sql)#
+    except Exception as e:
+        print_traceback(e)
+    # t = mycursor.execute("CREATE TABLE %s (table_id VARCHAR(255), name VARCHAR(255))", table_name)
+    # t.table_id = generate_table_id()
 
     # conn = db.create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI'), connect_args={'connect_timeout': 300}, pool_timeout=300, pool_recycle=3600)
     # metadata = MetaData()
@@ -245,7 +298,6 @@ def add_blank_row(rows, columns):
 
 
 # Miscellaneous *************************************
-# Create a distinct integration id for the integration.
 def generate_id(size=7, chars=string.digits):
     # Generate a random 7-character user id
     id = int(''.join(random.choice(chars) for _ in range(size)))
@@ -254,6 +306,32 @@ def generate_id(size=7, chars=string.digits):
 
     # Check to make sure there isn't already that id in the database
     if not db.session.query(exists().where(Domain.id == id)).scalar():
+        return id
+    else:
+        generate_id()
+
+
+def generate_table_id(size=12):
+    # Generate a random 12-character table id
+    chars = string.digits + string.ascii_lowercase + string.ascii_uppercase
+    id = 'tbl_' + str(int(''.join(random.choice(chars) for _ in range(size))))
+
+    from app.blueprints.api.models.tables import Table
+
+    # Check to make sure there isn't already that id in the database
+    if not db.session.query(exists().where(Table.table_id == id)).scalar():
+        return id
+    else:
+        generate_table_id()
+
+
+def generate_record_id(table, size=10):
+    # Generate a random 7-character record id
+    chars = string.digits + string.ascii_lowercase + string.ascii_uppercase
+    id = 'rec_' + str(int(''.join(random.choice(chars) for _ in range(size))))
+
+    # Check to make sure there isn't already that id in the database
+    if not db.session.query(exists().where(table.id == id)).scalar():
         return id
     else:
         generate_id()
