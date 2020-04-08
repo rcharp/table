@@ -122,11 +122,6 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a tabindex="-1" href="{{ url_for('user.sheet') }}">
-                                        <i class="si si-clock pull-right"></i>Sheet
-                                    </a>
-                                </li>
-                                <li>
                                     <a tabindex="-1" href="{{ url_for('user.settings') }}">
                                         <i class="si si-settings pull-right"></i>Settings
                                     </a>
@@ -210,21 +205,23 @@
                                         <div class="col-lg-8" style="width:100%; margin:0 auto; float:none;">
                                             <!-- Bootstrap Login -->
                                             <div class="block block-themed">
-                                                <div class="row">
-                                                    <div style="width:60%">
-                                                        <a class="block block-rounded block-link-hover3" href="{{ url_for('user.sheet') }}">
-                                                            <div class="block-content block-content-full clearfix" style="border:1px solid #d3d3d3;border-radius:4px;">
-                                                                <div class="pull-right">
-                                                                    <img class="img-avatar" src="assets/img/avatars/avatar2.jpg" alt="">
+                                                {% for table in tables %}
+                                                    <div class="row">
+                                                        <div style="width:60%">
+                                                            <a class="block block-rounded block-link-hover3" style="cursor:pointer;" onclick="LoadTable('{{ table['name'] }}');">
+                                                                <div class="block-content block-content-full clearfix" style="border:1px solid #d3d3d3;border-radius:4px;">
+                                                                    <div class="pull-right" style="width:100px;">
+                                                                        <span class="font-w300 text-primary" id="load-message" style="display:none"></span>
+                                                                    </div>
+                                                                    <div class="pull-left push-10-t">
+                                                                        <div class="font-w600 push-5">{{ table['name']|capitalize }}</div>
+                                                                        <div class="text-muted">{{ table['count'] }} rows</div>
+                                                                    </div>
                                                                 </div>
-                                                                <div class="pull-left push-10-t">
-                                                                    <div class="font-w600 push-5">{{ table_name|capitalize }}</div>
-                                                                    <div class="text-muted">{{ row_count }} rows</div>
-                                                                </div>
-                                                            </div>
-                                                        </a>
+                                                            </a>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                {% endfor %}
                                             </div>
                                             <!-- END Bootstrap Login -->
                                         </div>
@@ -357,6 +354,33 @@
         function GoBack() {
             window.history.back();
         }
+        </script>
+
+        <script>
+            function LoadTable(name){
+                LoadingMessage();
+                var url = "{{ url_for('user.table',  table_name='DUMMY') }}";
+                url = url.replace(/DUMMY/, name);
+                window.location.href = url;
+            }
+
+            function LoadingMessage(){
+                var message = document.getElementById('load-message');
+                message.style.display = '';
+
+                if (!message.innerText.includes('.')){
+                    message.innerText = 'Loading.';
+                }
+
+                if (!message.innerText.endsWith('....')){
+                    message.innerText += '.';
+                }
+                else {
+                    message.innerText = 'Loading.';
+                }
+
+                setTimeout(() => {  LoadingMessage(); }, 500);
+            }
         </script>
 
     </body>

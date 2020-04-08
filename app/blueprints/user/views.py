@@ -232,46 +232,37 @@ def dashboard():
     if current_user.role == 'admin':
         return redirect(url_for('admin.dashboard'))
 
-    from app.blueprints.api.api_functions import get_col_types, generate_id, get_rows, get_columns, get_table
+    from app.blueprints.api.api_functions import  get_tables
 
     # Which table are we using?
-    table_name = 'domains'
-    table = get_table(table_name)
-
-    l = False
-    limit = 10
-
-    limit = None if not l else limit
-
-    rows = get_rows(table, limit)
+    tables = get_tables()
 
     return render_template('user/dashboard.html', current_user=current_user,
-                           table_name=table_name,
-                           row_count=len(rows)
+                           tables=tables
                            )
 
 
 # View Sheet -------------------------------------------------------------------
-@user.route('/sheet', methods=['GET','POST'])
+@user.route('/table/<table_name>', methods=['GET','POST'])
 @login_required
 @csrf.exempt
-def sheet():
+def table(table_name):
     if current_user.role == 'admin':
         return redirect(url_for('admin.dashboard'))
 
-    from app.blueprints.api.api_functions import get_col_types, generate_id, get_rows, get_columns, get_table
+    from app.blueprints.api.api_functions import get_col_types, generate_id, get_rows, get_columns, get_table, count_rows
 
     # Which table are we using?
-    table_name = 'domains'
+    # table_name = 'domains'
     table = get_table(table_name)
 
-    l = True
-    limit = 10
+    l = False
+    limit = 50
 
     limit = None if not l else limit
 
-    rows = get_rows(table, limit)
-    cols = get_columns(table)
+    cols, columns = get_columns(table)
+    rows = get_rows(table, columns, limit)
 
     types = get_col_types()
     row_id = generate_id()
@@ -282,7 +273,7 @@ def sheet():
                            table_name=table_name,
                            types=types,
                            new_row_id=row_id,
-                           row_count=len(rows))
+                           row_count=count_rows(table))
 
 
 # Actions -------------------------------------------------------------------

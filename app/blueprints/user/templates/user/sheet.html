@@ -53,7 +53,7 @@
         <!-- END Stylesheets -->
     </head>
     {% set focus = false %}
-    <body style="zoom: 80%;" onload="SetStyles(); {% if focus %}FocusAddColumnButton();{% endif %}">
+    <body style="zoom: 80%;" onload="{% if focus %}FocusAddColumnButton();{% endif %}">
         <!-- Page Container -->
         <!--
             Available Classes:
@@ -101,11 +101,6 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a tabindex="-1" href="{{ url_for('user.sheet') }}">
-                                        <i class="si si-clock pull-right"></i>Sheet
-                                    </a>
-                                </li>
-                                <li>
                                     <a tabindex="-1" href="{{ url_for('user.settings') }}">
                                         <i class="si si-settings pull-right"></i>Settings
                                     </a>
@@ -136,7 +131,7 @@
                     </li>
                     <li>
                         <!-- Opens the Apps modal found at the bottom of the page, before including JS code -->
-                        <button class="btn btn-default pull-right" type="button" onclick="window.location.href='#success-message'">
+                        <button class="btn btn-default pull-right" type="button" onclick="BackToTop()">
                             <i class="fa fa-angle-up"></i>&nbsp;&nbsp;<span class="font-w300">Back to Top</span>
                         </button>
                     </li>
@@ -321,9 +316,10 @@
             };
 
             // Style the cells on load
-            var loaded = function() {
+            var loaded = function(instance) {
                 var r = rows.length;
                 var c = columns.length;
+
                 for (var i = 1; i< c; i++){
                     for (var j = 0; j< r; j++){
                         var cellName = jexcel.getColumnNameFromId([i, j]);
@@ -344,7 +340,8 @@
                 columnSorting:false,
                 onload: loaded,
                 onselection: clicked,
-                style: styles
+                style: styles,
+                pagination:false,
             });
         </script>
 
@@ -355,32 +352,43 @@
                 tbl.style.minHeight = '600px';
 
                 // Style the headers
-                var headers = document.getElementsByTagName('thead')[0].getElementsByTagName('td');
-                for (var i = 0; i < headers.length; i++) {
-                    headers[i].className = 'font-w300 header-item';
-                    headers[i].style.cssText = 'height:55px;background-color:white;vertical-align:middle;width:300px;text-transform:none;padding:5px 10px 5px 10px;';
-                }
+                StyleHeaders();
 
-                // Add a select all checkbox to the first column
-                var select_all_header = document.getElementsByClassName('header-item')[1];
-                CreateSelectAllBox(select_all_header);
-
-                // Create the edit button for the headers
-                for (var i = 1; i< headers.length; i++){
-                    // only create edit buttons for headers that aren't readOnly.
-                    // We use +1 here since the data columns and the headers are offset by 1
-                    if (!table.options.columns[i-1].readOnly === true && headers[i].innerText !== ''){
-                        var button = CreateChangeTypeButton(headers[i]);
-                        var div = CreateChangeTypeDiv(button);
-                        headers[i].appendChild(div);
-                    }
-                }
+                // Create the Header Buttons
+                CreateEditButtons();
 
                 // Miscellaneous styling and creations
                 StyleCheckBoxes(tbl);
                 CreateNewRowButton(tbl);
                 CreateNewColumnButton(tbl);
                 StyleSelectBoxes();
+            }
+
+            // Style the headers. This is called right before the page is done loading.
+            function StyleHeaders(){
+
+                var headers = document.getElementsByTagName('thead')[0].getElementsByTagName('td');
+                for (var i = 0; i < headers.length; i++) {
+                    headers[i].className = 'font-w300 header-item';
+                    headers[i].style.cssText = 'height:55px;background-color:white;vertical-align:middle;width:300px;text-transform:none;padding:5px 10px 5px 10px;';
+
+                    // Display the column type
+                    {#if (i === 0)#}
+                    {#    continue;#}
+                    {##}
+                    {#var span = document.createElement('span');#}
+                    {#var t = table.options.columns[i].type;#}
+                    {#span.innerText = '(' + t + ')';#}
+                    {#span.style.cssText = 'text-transform:capitalize';#}
+                    {#headers[i+1].appendChild(document.createElement('br'));#}
+                    {#headers[i+1].appendChild(span);#}
+                }
+
+                // Add a select all checkbox to the first column
+                var select_all_header = document.getElementsByClassName('header-item')[1];
+                CreateSelectAllBox(select_all_header);
+
+                return headers;
             }
 
             function StyleLastRow(){
@@ -550,8 +558,8 @@
                 // open the edit modal
                 $('#edit-column-modal').modal('toggle', button);
 
-                // Focus the button
-                //document.getElementById('AddColumnButton').focus();
+                // Focus on the button
+                FocusAddColumnButton();
 
             }
 
@@ -593,6 +601,23 @@
 
         <!-- Button functions -->
         <script type="text/javascript">
+
+            // Create the edit button in each header
+            function CreateEditButtons(){
+                // Get the headers that we will be creating buttons for
+                var headers = document.getElementsByTagName('thead')[0].getElementsByTagName('td');
+                // Create the edit button for the headers
+                for (var i = 1; i< headers.length; i++){
+                    // only create edit buttons for headers that aren't readOnly.
+                    // We use +1 here since the data columns and the headers are offset by 1
+                    if (!table.options.columns[i-1].readOnly === true && headers[i].innerText !== ''){
+                        var button = CreateChangeTypeButton(headers[i]);
+                        var div = CreateChangeTypeDiv(button);
+                        headers[i].appendChild(div);
+                    }
+                }
+            }
+
             // Create the + button at the beginning of each new row
             function CreateNewRowButton(){
                 var tbl = document.getElementsByTagName('table')[0];
@@ -666,7 +691,11 @@
                 var message = document.getElementById('success-message');
                 message.style.removeProperty('color');
                 message.style.cssText += 'color:green;';
-                window.location.href='{{ url_for('user.sheet') }}';
+
+                // Refresh
+                var url = "{{ url_for('user.table',  table_name='DUMMY') }}";
+                url = url.replace(/DUMMY/, '{{ table_name }}');
+                window.location.href = url;
             }
 
             function GenerateRowId(rows){
@@ -893,6 +922,14 @@
                 wrapper.parentElement.style.cssText += 'background-color:white';
 
             }
+
+            function BackToTop(){
+                window.location.href='#AddColumnButton';
+            }
+
+            function Alert(){
+                alert("Test");
+            }
         </script>
 
 
@@ -916,8 +953,7 @@
             }
 
             function FocusAddColumnButton(){
-                var add_column_node = document.getElementById('add-column');
-                add_column_node.focus();
+                window.location.href='#AddColumnButton';
             }
             function SelectAll(sel) {
                 var checkboxes = document.getElementsByClassName('select-box');
@@ -947,6 +983,11 @@
                 header.appendChild(input);
                 input.onblur = function(){header.innerText = input.value};
             }
+        </script>
+
+        <!-- Style the table right before the page finishes loading -->
+        <script>
+            SetStyles();
         </script>
     </body>
 </html>

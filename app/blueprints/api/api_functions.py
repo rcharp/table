@@ -12,7 +12,7 @@ from alembic import op
 from datetime import datetime
 from collections import defaultdict
 from app.extensions import db
-from sqlalchemy import exists, and_, or_, inspect, asc
+from sqlalchemy import exists, and_, or_, inspect, asc, func
 from flask import current_app, jsonify, make_response
 from importlib import import_module
 from app.blueprints.page.date import get_dt_string, is_datetime, format_datetime
@@ -21,7 +21,7 @@ from flask_login import current_user
 
 # Get from database **********************************
 def get_table(d):
-    conn = db.create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI'), connect_args={'connect_timeout': 120})
+    conn = db.create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI'), connect_args={'connect_timeout': 300}, pool_timeout=300, pool_recycle=3600)
     m = db.MetaData()
     m.reflect(conn)
     t = None
@@ -33,22 +33,28 @@ def get_table(d):
     return t
 
 
-def get_rows(d, limit=None):
+def get_tables():
+    table_name = 'domains'
+    table = get_table(table_name)
+
+    return [{'name': table_name, 'count': count_rows(table)}]
+
+
+def get_rows(t, columns, limit=None):
     rows = list()
 
     # Get the rows and the columns
-    domains = db.session.query(d).limit(limit).all() if limit is not None else db.session.query(d).all()
-    columns = d.columns
+    domains = db.session.query(t).limit(limit).all() if limit is not None else db.session.query(t).all()
+    if columns is None: return domains
 
     for domain in domains:
-
         # False is the first item in each row, which is the select checkbox
         data = [False]
 
         for column in columns:
 
             # Get the column's value for the row
-            e = getattr(domain, column.name)
+            e = getattr(domain, column.name, cont())
 
             # Format any dates
             if is_datetime(e):
@@ -61,6 +67,10 @@ def get_rows(d, limit=None):
     # Add a blank row to the list
     add_blank_row(rows, columns)
     return rows
+
+
+def cont():
+    pass
 
 
 def get_columns(d):
@@ -99,7 +109,7 @@ def get_columns(d):
         # Create a dictionary for each column name and its type
         cols.append(data)
 
-    return cols
+    return cols, columns
 
 
 # Update Table *******************************************
@@ -229,6 +239,10 @@ def generate_id(size=7, chars=string.digits):
         return id
     else:
         generate_id()
+
+
+def count_rows(d):
+    return db.session.query(d).order_by(d.c.id).count()
 
 
 def get_col_types():
