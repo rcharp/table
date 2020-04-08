@@ -8,6 +8,7 @@ import random
 import requests
 import traceback
 import psycopg2
+import mysql.connector
 from alembic import op
 from datetime import datetime
 from collections import defaultdict
@@ -15,29 +16,39 @@ from app.extensions import db
 from sqlalchemy import exists, and_, or_, inspect, asc, func
 from flask import current_app, jsonify, make_response
 from importlib import import_module
-from app.blueprints.page.date import get_dt_string, is_datetime, format_datetime
+from app.blueprints.page.date import get_dt_string, is_datetime, format_datetime, get_utc_date_today
 from flask_login import current_user
 
 
 # Get from database **********************************
 def get_table(d):
-    conn = db.create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI'), connect_args={'connect_timeout': 300}, pool_timeout=300, pool_recycle=3600)
-    m = db.MetaData()
-    m.reflect(conn)
-    t = None
-    for table in m.tables.values():
-        if table.name == d:
-            t = table
+    try:
+        conn = db.create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI'), connect_args={'connect_timeout': 300}, pool_timeout=300, pool_recycle=3600)
+        m = db.MetaData()
+        m.reflect(conn)
+        t = None
+        for table in m.tables.values():
+            if table.name == d:
+                t = table
 
-    db.session.close()
-    return t
+        db.session.close()
+        return t
+    except Exception as e:
+        print_traceback(e)
+        return None
 
 
 def get_tables():
-    table_name = 'domains'
-    table = get_table(table_name)
+    tables = list()
 
-    return [{'name': table_name, 'count': count_rows(table)}]
+    from app.blueprints.api.models.tables import Table
+    ts = Table.query.filter(Table.user_id == current_user.id).all()
+
+    for t in ts:
+        # s = get_table(t.name + '_' + t.table_id)
+        tables.append({'name': t.name, 'id': t.table_id, 'count': 0})
+
+    return tables
 
 
 def get_rows(t, columns, limit=None):
@@ -113,8 +124,8 @@ def get_columns(d):
 
 
 # Update Table *******************************************
-def create_table(table_name, user_id):
-    import mysql.connector
+def create_table(table_name, user_id, linked=None):
+    table_name = generate_full_table_name(table_name)
 
     mydb = mysql.connector.connect(
         host=current_app.config.get('SQLALCHEMY_HOST'),
@@ -124,68 +135,95 @@ def create_table(table_name, user_id):
     )
     mycursor = mydb.cursor()
 
-    # sql = "CREATE TABLE IF NOT EXISTS %s (" \
-    #       "created_on datetime DEFAULT NULL," \
-    #       "updated_on datetime DEFAULT NULL," \
-    #       "record_id int(11) NOT NULL AUTO_INCREMENT," \
-    #       "'user_id' int(11) DEFAULT NULL," \
-    #       "PRIMARY KEY ('record_id')," \
-    #       "KEY 'ix_domains_user_id' ('user_id')," \
-    #       "CONSTRAINT 'domains_ibfk_1' FOREIGN KEY ('user_id') REFERENCES 'users' ('id') ON DELETE CASCADE ON UPDATE CASCADE" \
-    #       ") ENGINE=InnoDB AUTO_INCREMENT=9926513 DEFAULT CHARSET=utf8;" % table_name
-
-    # sql = "CREATE TABLE %s (created_on date DEFAULT NULL," \
-    #       "updated_on date DEFAULT NULL,id int(11) NOT NULL " \
-    #       "AUTO_INCREMENT,user_id int(11) DEFAULT NULL,PRIMARY " \
-    #       "KEY (id),KEY ix_%s_user_id (user_id),CONSTRAINT " \
-    #       "%s_ibfk_1 FOREIGN KEY (user_id) REFERENCES users " \
-    #       "(id) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE=InnoDB " \
-    #       "AUTO_INCREMENT=9926513 DEFAULT CHARSET=utf8;" \
-    #       % (table_name, table_name, table_name)
-
-    table_name = "Ricky_charpebtuer"
-    # sql = (
-    # "CREATE TABLE `%s` ("
-    # "  `record_id` int(11) NOT NULL AUTO_INCREMENT,"
-    # "  `created_on` date DEFAULT NULL,"
-    # "  `updated_on` date DEFAULT NULL,"
-    # "  `user_id` int(11) DEFAULT NULL,"
-    # "  KEY ix_%s_user_id (user_id),"
-    # "  PRIMARY KEY (`record_id`)"
-    # "  CONSTRAINT `Ricky_charpebtuer_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,"
-    # ") ENGINE=InnoDB "
-    # "AUTO_INCREMENT=9926513 DEFAULT CHARSET=utf8;" % (table_name, table_name))
-
-
-    # ********* Works! *********
     try:
-        sql = ("CREATE TABLE `%s` ("
-        "`record_id` int(11) NOT NULL AUTO_INCREMENT,"
-        "`created_on` date DEFAULT NULL,"
-        "`updated_on` date DEFAULT NULL,"
-        "`user_id` int(11) DEFAULT NULL,"
-        "KEY ix_%s_user_id (user_id),"
-        "PRIMARY KEY (`record_id`)"
-        "CONSTRAINT `%s_ibfk_1` "
-        "FOREIGN KEY (`user_id`) "
-        "REFERENCES `users` (`id`) "
-        "ON DELETE CASCADE ON UPDATE CASCADE" # stops working at this line
-        ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin "
-        "AUTO_INCREMENT=1 ;" % (table_name, table_name, table_name))
+        # If this table is linked to another
+        if linked is not None:
+            sql = ("CREATE TABLE `%s` ("
+                   "`id` int(11) NOT NULL AUTO_INCREMENT,"
+                   "`record_id` varchar(255) DEFAULT NULL,"
+                   "`created_on` date DEFAULT NULL,"
+                   "`updated_on` date DEFAULT NULL,"
+                   "`user_id` int(11) DEFAULT '%s',"
+                   "`table_id` varchar(255) DEFAULT NULL,"
+                   "`linked_id` varchar(255) DEFAULT '%s',"
+                   "KEY ix_%s_user_id (`user_id`), "
+                   "KEY ix_%s_linked_id (`linked_id`), "
+                   "PRIMARY KEY (`id`), "
+                   "CONSTRAINT `%s_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE, "
+                   "CONSTRAINT `%s_ibfk_3` FOREIGN KEY (`linked_id`) REFERENCES `%s` (`table_id`) ON DELETE CASCADE ON UPDATE CASCADE"
+                   ") ENGINE=InnoDB DEFAULT CHARSET=utf8 "
+                   "AUTO_INCREMENT=1 ;" % (table_name, user_id, linked, table_name, table_name, table_name, table_name, linked))
+        else:
+            sql = ("CREATE TABLE `%s` ("
+                   "`id` int(11) NOT NULL AUTO_INCREMENT,"
+                   "`created_on` date DEFAULT NULL,"
+                   "`updated_on` date DEFAULT NULL,"
+                   "`record_id` varchar(255) DEFAULT NULL,"
+                   "`user_id` int(11) DEFAULT '%s',"
+                   "`table_id` varchar(255) DEFAULT '%s',"
+                   "`linked_id` varchar(255) DEFAULT NULL,"
+                   "KEY ix_%s_user_id (`user_id`), "
+                   "PRIMARY KEY (`id`), "
+                   "CONSTRAINT `%s_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE "
+                   ") ENGINE=InnoDB DEFAULT CHARSET=utf8 "
+                   "AUTO_INCREMENT=1 ;" % (table_name, user_id, table_name, table_name, table_name))
 
-        mycursor.execute(sql)#
+        # Create the table
+        mycursor.execute(sql)
+
+        # add it to the "tables" table
+        if save_table(table_name, user_id):
+            return table_name
+        return None
     except Exception as e:
         print_traceback(e)
-    # t = mycursor.execute("CREATE TABLE %s (table_id VARCHAR(255), name VARCHAR(255))", table_name)
-    # t.table_id = generate_table_id()
+        return None
 
-    # conn = db.create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI'), connect_args={'connect_timeout': 300}, pool_timeout=300, pool_recycle=3600)
-    # metadata = MetaData()
-    # t = Table(table_name, metadata,
-    #           Column('id', Integer, primary_key=True),
-    #           )
-    # metadata.create_all(conn)
-    return True
+
+def save_table(table_name, user_id):
+    try:
+        if get_table(table_name) is not None:
+            from app.blueprints.api.models.tables import Table
+
+            t = Table()
+            t.user_id = user_id
+            t.name, t.table_id = split_table_name(table_name)
+            t.save()
+
+            return True
+        return False
+    except Exception as e:
+        print_traceback(e)
+        return False
+
+
+def split_table_name(table_name):
+    name, table_id = re.split('_tbl_', table_name)
+    return name, 'tbl_' + table_id
+
+
+def create_record(table_name):
+
+    if table_name is None: return
+
+    try:
+        record_id = generate_record_id(get_table(table_name))
+        today = get_utc_date_today()
+        print(today)
+        mydb = mysql.connector.connect(
+            host=current_app.config.get('SQLALCHEMY_HOST'),
+            user=current_app.config.get('SQLALCHEMY_USER'),
+            passwd=current_app.config.get('SQLALCHEMY_PASSWORD'),
+            database=current_app.config.get('SQLALCHEMY_DATABASE')
+        )
+        mycursor = mydb.cursor()
+
+        sql = ("INSERT INTO `%s` (`created_on`, `updated_on`, `record_id`, `user_id`, `table_id`, `linked_id`) VALUES ('%s', '%s', '%s', '%s', '%s', NULL) " % (table_name, today, today, record_id, current_user.id, table_name))
+        mycursor.execute(sql)
+
+        mydb.commit()#
+    except Exception as e:
+        print_traceback(e)
 
 
 def update_row(id, val, col):
@@ -311,10 +349,16 @@ def generate_id(size=7, chars=string.digits):
         generate_id()
 
 
-def generate_table_id(size=12):
+def generate_full_table_name(table_name):
+    table_name = table_name.lower().replace(' ', '_')
+    id = generate_table_id()
+    return table_name + '_' + id
+
+
+def generate_table_id(size=16):
     # Generate a random 12-character table id
-    chars = string.digits + string.ascii_lowercase + string.ascii_uppercase
-    id = 'tbl_' + str(int(''.join(random.choice(chars) for _ in range(size))))
+    chars = string.digits + string.ascii_lowercase
+    id = 'tbl_' + ''.join(random.choice(chars) for _ in range(size))
 
     from app.blueprints.api.models.tables import Table
 
@@ -327,11 +371,11 @@ def generate_table_id(size=12):
 
 def generate_record_id(table, size=10):
     # Generate a random 7-character record id
-    chars = string.digits + string.ascii_lowercase + string.ascii_uppercase
-    id = 'rec_' + str(int(''.join(random.choice(chars) for _ in range(size))))
+    chars = string.digits + string.ascii_lowercase
+    id = 'rec_' + ''.join(random.choice(chars) for _ in range(size))
 
     # Check to make sure there isn't already that id in the database
-    if not db.session.query(exists().where(table.id == id)).scalar():
+    if not db.session.query(exists().where(table.c.id == id)).scalar():
         return id
     else:
         generate_id()

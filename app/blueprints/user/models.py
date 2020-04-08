@@ -52,12 +52,13 @@ class User(UserMixin, ResourceMixin, db.Model):
     current_sign_in_ip = db.Column(db.String(45))
     last_sign_in_on = db.Column(AwareDateTime())
     last_sign_in_ip = db.Column(db.String(45))
+    description = db.Column(db.String(45))
 
     def __init__(self, **kwargs):
         # Call Flask-SQLAlchemy's constructor.
         super(User, self).__init__(**kwargs)
 
-        self.password = User.encrypt_password(kwargs.get('password', ''))
+        self.password = User.encrypt_password(kwargs.get('password', ''))\
 
     @classmethod
     def find_by_identity(cls, identity):

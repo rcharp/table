@@ -699,8 +699,8 @@
                 message.style.cssText += 'color:green;';
 
                 // Refresh
-                var url = "{{ url_for('user.table',  table_name='DUMMY') }}";
-                url = url.replace(/DUMMY/, '{{ table_name }}');
+                var url = "{{ url_for('user.table',  table_id='DUMMY') }}";
+                url = url.replace(/DUMMY/, '{{ table_id }}');
                 window.location.href = url;
             }
 

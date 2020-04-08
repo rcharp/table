@@ -232,7 +232,7 @@ def dashboard():
     if current_user.role == 'admin':
         return redirect(url_for('admin.dashboard'))
 
-    from app.blueprints.api.api_functions import  get_tables
+    from app.blueprints.api.api_functions import get_tables
 
     # Which table are we using?
     tables = get_tables()
@@ -243,17 +243,19 @@ def dashboard():
 
 
 # View Sheet -------------------------------------------------------------------
-@user.route('/table/<table_name>', methods=['GET','POST'])
+@user.route('/table/<table_id>', methods=['GET','POST'])
 @login_required
 @csrf.exempt
-def table(table_name):
+def table(table_id):
     if current_user.role == 'admin':
         return redirect(url_for('admin.dashboard'))
 
     from app.blueprints.api.api_functions import get_col_types, generate_id, get_rows, get_columns, get_table, count_rows
 
     # Which table are we using?
-    # table_name = 'domains'
+    from app.blueprints.api.models.tables import Table
+    t = Table.query.filter(Table.table_id == table_id).scalar()
+    table_name = t.name + '_' + t.table_id
     table = get_table(table_name)
 
     limit = True
@@ -270,7 +272,8 @@ def table(table_name):
     return render_template('user/sheet.html', current_user=current_user,
                            cols=cols,
                            rows=rows,
-                           table_name=table_name,
+                           table_name=t.name,
+                           table_id=table_id,
                            types=types,
                            new_row_id=row_id,
                            row_count=count_rows(table))
@@ -283,10 +286,12 @@ def create_table():
     if request.method == 'POST':
         if 'table_name' in request.form:
             try:
-                from app.blueprints.api.api_functions import create_table
+                from app.blueprints.api.api_functions import create_table, create_record
                 table_name = request.form['table_name']
 
                 result = create_table(table_name, current_user.id)
+                create_record(result)
+
                 return jsonify({'result': result})
             except Exception as e:
                 print_traceback(e)

@@ -211,13 +211,13 @@
                                                 {% for table in tables %}
                                                     <div class="row table-item" style="margin-bottom:10px;">
                                                         <div style="width:60%">
-                                                            <a class="block block-rounded block-link-hover3" style="cursor:pointer;" onclick="LoadTable('{{ table['name'] }}');">
+                                                            <a class="block block-rounded block-link-hover3" style="cursor:pointer;" onclick="LoadTable('{{ table['id'] }}');">
                                                                 <div class="block-content block-content-full clearfix" style="border:1px solid #d3d3d3;border-radius:4px;">
                                                                     <div class="pull-right" style="width:100px;">
                                                                         <span class="font-w300 text-primary" id="load-message" style="display:none"></span>
                                                                     </div>
                                                                     <div class="pull-left push-10-t">
-                                                                        <div class="font-w600 push-5 table_name" id="table_name">{{ table['name']|capitalize }}</div>
+                                                                        <div class="font-w600 push-5 table_name" id="table_name">{{ table['name']|capitalize }} - &nbsp;&nbsp;<small>({{ table['id'] }})</small></div>
                                                                         <div class="text-muted row_count" id="row_count">{{ table['count'] }} rows</div>
                                                                     </div>
                                                                 </div>
@@ -361,7 +361,6 @@
                 new_table.style.removeProperty('background-color');
                 new_table.style.removeProperty('border');
                 new_table.style.cssText += 'border: 1px solid #d3d3d3';
-                new_table.value = '';
             });
 
             function CreateTable(){
@@ -428,10 +427,10 @@
         </script>
 
         <script>
-            function LoadTable(name){
+            function LoadTable(id){
                 LoadingMessage();
-                var url = "{{ url_for('user.table',  table_name='DUMMY') }}";
-                url = url.replace(/DUMMY/, name);
+                var url = "{{ url_for('user.table',  table_id='DUMMY') }}";
+                url = url.replace(/DUMMY/, id);
                 window.location.href = url;
             }
 
