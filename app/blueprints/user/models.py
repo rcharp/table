@@ -198,7 +198,6 @@ class User(UserMixin, ResourceMixin, db.Model):
 
         return delete_count
 
-
     def is_active(self):
         """
         Return whether or not the user account is active, this satisfies

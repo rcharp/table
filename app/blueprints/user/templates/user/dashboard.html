@@ -74,7 +74,7 @@
         <script src="https://js.stripe.com/v3/"></script>
         <!-- END Stylesheets -->
     </head>
-    <body style="zoom: 80%;">
+    <body style="zoom: 80%;" onload="GetRowCounts();">
         <!-- Page Container -->
         <!--
             Available Classes:
@@ -214,11 +214,11 @@
                                                             <a class="block block-rounded block-link-hover3" style="cursor:pointer;" onclick="LoadTable('{{ table['id'] }}');">
                                                                 <div class="block-content block-content-full clearfix" style="border:1px solid #d3d3d3;border-radius:4px;">
                                                                     <div class="pull-right" style="width:100px;">
-                                                                        <span class="font-w300 text-primary" id="load-message" style="display:none"></span>
+                                                                        <span class="font-w300 text-primary" id="load-message-{{ table['id'] }}" style="display:none"></span>
                                                                     </div>
                                                                     <div class="pull-left push-10-t">
-                                                                        <div class="font-w600 push-5 table_name" id="table_name">{{ table['name']|capitalize }} - &nbsp;&nbsp;<small>({{ table['id'] }})</small></div>
-                                                                        <div class="text-muted row_count" id="row_count">{{ table['count'] }} rows</div>
+                                                                        <div class="font-w600 push-5 table_name" id="table_name">{{ table['name']|table_name_filter }}&nbsp;-&nbsp;<small>({{ table['id'] }})</small></div>
+                                                                        <div class="text-muted row_count" id="row_count_{{ table['id'] }}">Counting records...</div>
                                                                     </div>
                                                                 </div>
                                                             </a>
@@ -428,14 +428,14 @@
 
         <script>
             function LoadTable(id){
-                LoadingMessage();
+                LoadingMessage(id);
                 var url = "{{ url_for('user.table',  table_id='DUMMY') }}";
                 url = url.replace(/DUMMY/, id);
                 window.location.href = url;
             }
 
-            function LoadingMessage(){
-                var message = document.getElementById('load-message');
+            function LoadingMessage(id){
+                var message = document.getElementById('load-message-' + id);
                 message.style.display = '';
 
                 if (!message.innerText.includes('.')){
@@ -450,6 +450,36 @@
                 }
 
                 setTimeout(() => {  LoadingMessage(); }, 500);
+            }
+
+            function GetRowCounts(){
+                var tables = JSON.parse('{{ tables|tojson }}');
+
+                for (var i = 0; i < tables.length; i ++){
+                    $.ajax({
+                        url: '{{ url_for("user.get_row_counts") }}',
+                        type: 'POST',
+                        data: {'table_name': tables[i]['name'], 'table_id': tables[i]['id']},
+                        success: function (response) {
+                            if ('result' in response){
+                                UpdateRowCounts(response['result'])
+                            }
+                        },
+                    });
+                }
+
+            }
+            function UpdateRowCounts(result){
+                //alert(results);
+                var rows = '';
+                if (result['count'] === 1){
+                    rows = ' record';
+                }
+                else{
+                    rows = ' records';
+                }
+
+                document.getElementById('row_count_' + result['id']).innerText = result['count'] + rows;
             }
         </script>
 

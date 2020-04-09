@@ -38,15 +38,14 @@ def get_table(d):
         return None
 
 
-def get_tables():
+def get_tables(user_id):
     tables = list()
 
     from app.blueprints.api.models.tables import Table
-    ts = Table.query.filter(Table.user_id == current_user.id).all()
+    ts = Table.query.filter(Table.user_id == user_id).all()
 
     for t in ts:
-        # s = get_table(t.name + '_' + t.table_id)
-        tables.append({'name': t.name, 'id': t.table_id, 'count': 0})
+        tables.append({'name': t.name, 'id': t.table_id})
 
     return tables
 
@@ -62,7 +61,7 @@ def get_rows(t, columns, limit=None):
         # False is the first item in each row, which is the select checkbox
         data = [False]
 
-        for column in columns:
+        for column in [x for x in columns if x.name not in hidden_columns()]:
 
             # Get the column's value for the row
             e = getattr(domain, column.name, cont())
@@ -80,47 +79,55 @@ def get_rows(t, columns, limit=None):
     return rows
 
 
-def cont():
-    pass
-
-
 def get_columns(d):
 
-    cols = [{'title': ' ', 'type': 'checkbox', 'width': 50}]
+    try:
+        cols = [{'title': ' ', 'type': 'checkbox', 'width': 50}]
 
-    # Get the columns
-    columns = d.columns
-    for column in columns:
-        width = 250
-        options = {}
-        data = {}
-        type = str(column.type).lower().strip()
-        if 'varchar' in type: type = 'text'
-        # Format boolean columns
-        if 'boolean' in type or 'tinyint' in type:
-            type = 'checkbox'
-            width = 150
+        # Get the columns
+        columns = d.columns
+        for column in columns:
+            width = 250
+            options = {}
+            data = {}
+            type = str(column.type).lower().strip()
 
-        if 'integer' in type:
-            type = 'numeric'
+            # Format column types
+            if 'varchar' in type:
+                type = 'text'
 
-        # Format date columns
-        if 'date' in type:
-            type = 'calendar'
-            options.update({'today': True, 'format': 'MM/DD/YYYY'})
+            if 'boolean' in type or 'tinyint' in type:
+                type = 'checkbox'
+                width = 150
 
-        # Make created and updated columns readonly
-        if column.name == 'created_on' or column.name == 'updated_on' or column.name == 'id':
-            width = 150
-            data.update({'readOnly': True})
+            if 'integer' in type:
+                type = 'numeric'
 
-        # Update the column's data
-        data.update({'title': format_column_name(column.name), 'type': type, 'options': options, 'width': width})
+            # Format date columns
+            if 'date' in type:
+                type = 'calendar'
+                options.update({'today': True, 'format': 'MM/DD/YYYY'})
 
-        # Create a dictionary for each column name and its type
-        cols.append(data)
+            # Make created and updated columns, as well as record id readonly
+            if column.name == 'created_on' or column.name == 'updated_on' or column.name == 'record_id':
+                width = 150
+                data.update({'readOnly': True})
 
-    return cols, columns
+            # Update the column's data
+            data.update({'title': format_column_name(column.name), 'type': type, 'options': options, 'width': width})
+
+            # Don't add hidden columns
+            if column.name not in hidden_columns():
+                # Create a dictionary for each column name and its type
+                cols.append(data)
+
+        return cols, columns
+    except Exception as e:
+        print_traceback(e)
+        return None, None
+    except Error as r:
+        print_traceback(r)
+        return None, None
 
 
 # Update Table *******************************************
@@ -156,9 +163,9 @@ def create_table(table_name, user_id, linked=None):
         else:
             sql = ("CREATE TABLE `%s` ("
                    "`id` int(11) NOT NULL AUTO_INCREMENT,"
+                   "`record_id` varchar(255) DEFAULT NULL,"
                    "`created_on` date DEFAULT NULL,"
                    "`updated_on` date DEFAULT NULL,"
-                   "`record_id` varchar(255) DEFAULT NULL,"
                    "`user_id` int(11) DEFAULT '%s',"
                    "`table_id` varchar(255) DEFAULT '%s',"
                    "`linked_id` varchar(255) DEFAULT NULL,"
@@ -170,6 +177,8 @@ def create_table(table_name, user_id, linked=None):
 
         # Create the table
         mycursor.execute(sql)
+        mycursor.close()
+        mydb.close()
 
         # add it to the "tables" table
         if save_table(table_name, user_id):
@@ -221,7 +230,9 @@ def create_record(table_name):
         sql = ("INSERT INTO `%s` (`created_on`, `updated_on`, `record_id`, `user_id`, `table_id`, `linked_id`) VALUES ('%s', '%s', '%s', '%s', '%s', NULL) " % (table_name, today, today, record_id, current_user.id, table_name))
         mycursor.execute(sql)
 
-        mydb.commit()#
+        mydb.commit()
+        mycursor.close()
+        mydb.close()
     except Exception as e:
         print_traceback(e)
 
@@ -369,7 +380,7 @@ def generate_table_id(size=16):
         generate_table_id()
 
 
-def generate_record_id(table, size=10):
+def generate_record_id(table, size=16):
     # Generate a random 7-character record id
     chars = string.digits + string.ascii_lowercase
     id = 'rec_' + ''.join(random.choice(chars) for _ in range(size))
@@ -381,8 +392,31 @@ def generate_record_id(table, size=10):
         generate_id()
 
 
-def count_rows(d):
-    return db.session.query(d).order_by(d.c.id).count()
+def count_rows(table_name):
+
+    if table_name is None: return 0
+
+    # conn = db.create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI'), connect_args={'connect_timeout': 300}, pool_timeout=300, pool_recycle=3600)
+    mydb = mysql.connector.connect(
+        host=current_app.config.get('SQLALCHEMY_HOST'),
+        user=current_app.config.get('SQLALCHEMY_USER'),
+        passwd=current_app.config.get('SQLALCHEMY_PASSWORD'),
+        database=current_app.config.get('SQLALCHEMY_DATABASE')
+    )
+    mycursor = mydb.cursor()
+    mycursor.execute('select * from %s' % table_name)
+    mycursor.fetchall()
+    count = mycursor.rowcount
+
+    mydb.commit()
+    mycursor.close()
+    mydb.close()
+    return count
+
+
+def get_limit(lim):
+    lim = None if lim == 0 else lim
+    return lim
 
 
 def get_col_types():
@@ -400,6 +434,7 @@ def get_col_types():
 def format_column_name(col):
     if col == 'id': col = 'record id'
     if col == 'updated_on': col = 'last updated'
+    if col == 'linked_id': col = 'linked to'
     return col.replace('_', ' ').title()
 
 
@@ -421,3 +456,11 @@ def format_type(type):
 
 def col_title_to_name(col):
     return col.lower().replace(' ','_')
+
+
+def hidden_columns():
+    return ['id', 'table_id', 'user_id']
+
+
+def cont():
+    pass

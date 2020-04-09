@@ -118,6 +118,10 @@ def create_app(settings_override=None):
     app.config.from_object('config.settings')
     app.config.from_pyfile('settings.py', silent=True)
 
+    # Keeps the app from crashing on reload
+    app.config['SQLALCHEMY_POOL_RECYCLE'] = 499
+    app.config['SQLALCHEMY_POOL_TIMEOUT'] = 120
+
     if settings_override:
         app.config.update(settings_override)
 
@@ -202,7 +206,7 @@ def template_processors(app):
     app.jinja_env.filters['today_filter'] = today_filter
     app.jinja_env.filters['site_name_filter'] = site_name_filter
     app.jinja_env.filters['site_color_filter'] = site_color_filter
-    app.jinja_env.filters['tld_filter'] = tld_filter
+    app.jinja_env.filters['table_name_filter'] = table_name_filter
     app.jinja_env.filters['shuffle_filter'] = shuffle_filter
     app.jinja_env.filters['percent_filter'] = percent_filter
     app.jinja_env.filters['column_filter'] = column_filter
@@ -360,13 +364,8 @@ def site_color_filter(arg):
     return '009fff'
 
 
-def tld_filter(arg, k):
-
-    # Testing pagination
-    # items = [x for x in arg.items if x.name.endswith(k)]
-    # arg.items = items
-    # return arg
-    return [x for x in arg if x['name'].endswith(k)]
+def table_name_filter(arg):
+    return arg.replace('_', ' ').title()
 
 
 def shuffle_filter(arg):
@@ -382,4 +381,4 @@ def percent_filter(arg):
 
 
 def column_filter(arg):
-    return arg.replace('_',' ').title()
+    return arg.replace('_', ' ').title()

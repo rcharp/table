@@ -235,11 +235,9 @@ def dashboard():
     from app.blueprints.api.api_functions import get_tables
 
     # Which table are we using?
-    tables = get_tables()
+    tables = get_tables(current_user.id)
 
-    return render_template('user/dashboard.html', current_user=current_user,
-                           tables=tables
-                           )
+    return render_template('user/dashboard.html', current_user=current_user,tables=tables)
 
 
 # View Sheet -------------------------------------------------------------------
@@ -250,22 +248,34 @@ def table(table_id):
     if current_user.role == 'admin':
         return redirect(url_for('admin.dashboard'))
 
-    from app.blueprints.api.api_functions import get_col_types, generate_id, get_rows, get_columns, get_table, count_rows
+    from app.blueprints.api.api_functions import get_col_types, generate_id, get_rows, get_columns, get_table, count_rows, get_limit
 
-    # Which table are we using?
+    if table_id is None:
+        flash("There was a problem retrieving this table. Please try again.", "error")
+        return redirect(url_for('user.dashboard'))
+
+    # Which table are we using? Get it from db using the id
     from app.blueprints.api.models.tables import Table
     t = Table.query.filter(Table.table_id == table_id).scalar()
+    if t is None or t.name is None or t.table_id is None:
+        flash("There was a problem retrieving this table. Please try again.", "error")
+        return redirect(url_for('user.dashboard'))
+
     table_name = t.name + '_' + t.table_id
     table = get_table(table_name)
+    if table is None:
+        flash("There was a problem retrieving this table. Please try again.", "error")
+        return redirect(url_for('user.dashboard'))
 
-    limit = True
-    lim = 50
-
-    lim = None if not limit else lim
+    lim = get_limit(0)
 
     cols, columns = get_columns(table)
-    rows = get_rows(table, columns, lim)
 
+    if cols is None or columns is None:
+        flash("There was a problem retrieving this table. Please try again.", "error")
+        return redirect(url_for('user.dashboard'))
+
+    rows = get_rows(table, columns, lim)
     types = get_col_types()
     row_id = generate_id()
 
@@ -276,7 +286,7 @@ def table(table_id):
                            table_id=table_id,
                            types=types,
                            new_row_id=row_id,
-                           row_count=count_rows(table))
+                           row_count=count_rows(table_name))
 
 
 # Actions -------------------------------------------------------------------
@@ -375,9 +385,26 @@ def delete_column():
             col = json.loads(request.form['col'])
 
             from app.blueprints.api.api_functions import delete_column
-            result = delete_rows(rows)
+            result = delete_column(col)
             return jsonify({'result': result})
     return redirect(url_for('user.dashboard'))
+
+
+@user.route('/get_row_counts', methods=['POST'])
+@csrf.exempt
+def get_row_counts():
+    if request.method == 'POST':
+        if 'table_name' in request.form and 'table_id' in request.form:
+
+            from app.blueprints.api.api_functions import count_rows
+            table_name = request.form['table_name'] + '_' + request.form['table_id']
+            count = count_rows(table_name)
+            counts = {'name': request.form['table_name'], 'id': request.form['table_id'], 'count': count}
+
+            return jsonify({'result': counts})
+        else:
+            return redirect(url_for('errors.error_404'))
+    return redirect(url_for('errors.error_404'))
 
 
 @user.route('/new_row_id', methods=['GET','POST'])

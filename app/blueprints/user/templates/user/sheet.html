@@ -4,7 +4,7 @@
     <head>
         <meta charset="utf-8">
 
-        <title>Table</title>
+        <title>{{ table_name|table_name_filter }}</title>
 
         <meta name="description" content="OneUI - Admin Dashboard Template &amp; UI Framework created by pixelcave and published on Themeforest">
         <meta name="author" content="pixelcave">
@@ -150,9 +150,9 @@
                         </form>
                     </li>
                     <li>
-                        <div class="col-sm-7">
+                        <div class="col-md-12">
                             <h1 class="page-heading">
-                                <a href="{{ url_for('user.dashboard') }}">{{ table_name.replace('_',' ')|capitalize }}</a>
+                                <a href="{{ url_for('user.dashboard') }}">{{ table_name|table_name_filter }}</a>
                             </h1>
                         </div>
                     </li>
