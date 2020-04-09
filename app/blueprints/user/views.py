@@ -282,6 +282,7 @@ def table(table_id):
     return render_template('user/sheet.html', current_user=current_user,
                            cols=cols,
                            rows=rows,
+                           full_table_name=table_name,
                            table_name=t.name,
                            table_id=table_id,
                            types=types,
@@ -314,14 +315,15 @@ def create_table():
 @csrf.exempt
 def update_table():
     if request.method == 'POST':
-        if 'row' in request.form and 'val' in request.form and 'col' in request.form:
+        if 'table_name' in request.form and 'row' in request.form and 'val' in request.form and 'col' in request.form:
             try:
-                from app.blueprints.api.api_functions import update_row
+                from app.blueprints.api.api_functions import update_record
+                table_name = request.form['table_name']
                 row = request.form['row']
                 val = request.form['val']
                 col = request.form['col']
 
-                result = update_row(row, val, col)
+                result = update_record(row, val, col)
                 return jsonify({'result': result})
             except Exception as e:
                 print_traceback(e)

@@ -85,7 +85,7 @@ def get_columns(d):
         cols = [{'title': ' ', 'type': 'checkbox', 'width': 50}]
 
         # Get the columns
-        columns = d.columns
+        columns = [x for x in d.columns if x.name not in hidden_columns()]
         for column in columns:
             width = 250
             options = {}
@@ -108,7 +108,7 @@ def get_columns(d):
                 type = 'calendar'
                 options.update({'today': True, 'format': 'MM/DD/YYYY'})
 
-            # Make created and updated columns, as well as record id readonly
+            # Make created and updated columns, as well as record id, readonly
             if column.name == 'created_on' or column.name == 'updated_on' or column.name == 'record_id':
                 width = 150
                 data.update({'readOnly': True})
@@ -117,9 +117,7 @@ def get_columns(d):
             data.update({'title': format_column_name(column.name), 'type': type, 'options': options, 'width': width})
 
             # Don't add hidden columns
-            if column.name not in hidden_columns():
-                # Create a dictionary for each column name and its type
-                cols.append(data)
+            cols.append(data)
 
         return cols, columns
     except Exception as e:
@@ -206,11 +204,6 @@ def save_table(table_name, user_id):
         return False
 
 
-def split_table_name(table_name):
-    name, table_id = re.split('_tbl_', table_name)
-    return name, 'tbl_' + table_id
-
-
 def create_record(table_name):
 
     if table_name is None: return
@@ -237,35 +230,61 @@ def create_record(table_name):
         print_traceback(e)
 
 
-def update_row(id, val, col):
+def update_record(table_name, id, col, val):
+
+    if table_name is None: return false
+
     try:
+        mydb = mysql.connector.connect(
+            host=current_app.config.get('SQLALCHEMY_HOST'),
+            user=current_app.config.get('SQLALCHEMY_USER'),
+            passwd=current_app.config.get('SQLALCHEMY_PASSWORD'),
+            database=current_app.config.get('SQLALCHEMY_DATABASE')
+        )
+        mycursor = mydb.cursor()
 
-        # Get the corresponding item from the table
-        from app.blueprints.api.models.domains import Domain
+        sql = ("UPDATE %s SET %s = %s WHERE `record_id` = %s" % (table_name, col, val, id))
+        mycursor.execute(sql)
 
-        if not db.session.query(exists().where(Domain.id == id)).scalar():
-            d = Domain()
-            d.id = id
-            d.save()
+        mydb.commit()
+        mycursor.close()
+        mydb.close()
 
-            return True
-        else:
-            d = Domain.query.filter(Domain.id == id).scalar()
-
-            # Handle booleans
-            if val == 'true': val = True
-            elif val == 'false': val = False
-
-            # If the value has been changed, then update the table
-            if getattr(d, col) != val:
-                setattr(d, col, val)
-                d.save()
-
-                return True
-        return False
+        return True
     except Exception as e:
         print_traceback(e)
         return False
+
+
+# def update_row(id, val, col):
+#     try:
+#
+#         # Get the corresponding item from the table
+#         from app.blueprints.api.models.domains import Domain
+#
+#         if not db.session.query(exists().where(Domain.id == id)).scalar():
+#             d = Domain()
+#             d.id = id
+#             d.save()
+#
+#             return True
+#         else:
+#             d = Domain.query.filter(Domain.id == id).scalar()
+#
+#             # Handle booleans
+#             if val == 'true': val = True
+#             elif val == 'false': val = False
+#
+#             # If the value has been changed, then update the table
+#             if getattr(d, col) != val:
+#                 setattr(d, col, val)
+#                 d.save()
+#
+#                 return True
+#         return False
+#     except Exception as e:
+#         print_traceback(e)
+#         return False
 
 
 def add_column(table, column, type):
@@ -452,6 +471,11 @@ def format_type(type):
         return 'date'
     if type == 'numeric':
         return 'int'
+
+
+def split_table_name(table_name):
+    name, table_id = re.split('_tbl_', table_name)
+    return name, 'tbl_' + table_id
 
 
 def col_title_to_name(col):

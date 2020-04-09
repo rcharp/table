@@ -306,7 +306,7 @@
                 // The index of the row and cell we're changing
                 var cellIndex = cell.cellIndex;
                 var rowIndex = cell.parentNode.rowIndex;
-                var idColumnIndex = GetColumnIndex();
+                var idColumnIndex = GetColumnIndex("Record Id");
 
                 // Get the column name of the cell we're changing
                 var col_name = document.getElementsByTagName('table')[0].rows[0].cells[cellIndex].innerText;
@@ -333,6 +333,10 @@
             var clicked = function(instance, x1, y1, x2, y2, origin) {
             };
 
+            var insertedColumn = function(instance) {
+                StyleColumn();
+            };
+
             var table = jexcel(document.getElementById('jtable'), {
                 data: rows,
                 lazyLoading: true,
@@ -342,6 +346,7 @@
                 columnSorting:false,
                 onload: loaded,
                 onselection: clicked,
+                oninsertcolumn: insertedColumn,
                 style: styles,
                 pagination:false,
             });
@@ -418,6 +423,22 @@
                 return CreateNewRowButton(document.getElementById('jtable'));
             }
 
+            function StyleColumn(){
+                // Style the new column
+                var header = StyleLastColumn();
+
+                // Add a button to the new column's header
+                var button = CreateChangeTypeButton(header, true);
+                var div = CreateChangeTypeDiv(button);
+                header.appendChild(div);
+
+                // open the edit modal
+                $('#edit-column-modal').modal('toggle', button);
+
+                // Focus on the button
+                FocusAddColumnButton();
+            }
+
             // Styles the last column
             function StyleLastColumn(){
                 var tbl = document.getElementsByTagName('table')[0];
@@ -479,10 +500,11 @@
             function UpdateTable(row_id, col_name, val) {
                 // Format the column name to be found in the database
                 col_name = col_name.toLowerCase().replace(' ', '_');
+                alert('{{ full_table_name }}');
                 $.ajax({
                     url: '{{ url_for("user.update_table") }}',
                     type: 'POST',
-                    data: {'row': row_id, 'col': col_name, 'val': val},
+                    data: {'row': row_id, 'col': col_name, 'val': val, 'table_name': '{{ full_table_name }}'},
                     success: function (response) {
                         if ('result' in response && response['result'] === true){
                             var message = document.getElementById('success-message');
@@ -550,22 +572,11 @@
             // Add a new column at the end of the columns
             function AddColumn() {
 
-                // Add a new column
-                table.insertColumn();
-
-                // Style the new column
-                var header = StyleLastColumn();
-
-                // Add a button to the new column's header
-                var button = CreateChangeTypeButton(header, true);
-                var div = CreateChangeTypeDiv(button);
-                header.appendChild(div);
-
-                // open the edit modal
-                $('#edit-column-modal').modal('toggle', button);
-
-                // Focus on the button
-                FocusAddColumnButton();
+                // Don't add a column if the edit modal is already open.
+                if (!$('#edit-column-modal').is(':visible')){
+                    // Add a new column
+                    table.insertColumn();
+                }
 
             }
 
