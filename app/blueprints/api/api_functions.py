@@ -57,6 +57,10 @@ def get_records(table, columns, limit=None):
     records = db.session.query(table).limit(limit).all() if limit is not None else db.session.query(table).all()
     if columns is None: return domains
 
+    # If there are no records, add a blank one to start.
+    if len(records) == 0:
+        pass #add_blank_row(rows, columns, table)
+
     for record in records:
         # False is the first item in each row, which is the select checkbox
         data = [False]
@@ -74,7 +78,8 @@ def get_records(table, columns, limit=None):
             data.append(e)
         rows.append(data)
 
-    # Add a blank row to the list
+    # Add a blank row to the end of the list.
+    # This will serve as the "New Row" row at the end of the table
     add_blank_row(rows, columns)
     return rows
 
@@ -375,11 +380,22 @@ def delete_column(rows):
     return True
 
 
-def add_blank_row(rows, columns):
+def add_blank_row(rows, columns, table=None):
     data = [False]
-    for x in range(len(columns)):
-        data.append(None)
-    rows.append(data)
+
+    if table is not None:
+        for column in columns:
+            if column.name == 'created_on' or column.name == 'updated_on':
+                data.append(get_today_date_string())
+            elif column.name == 'record_id':
+                data.append(generate_record_id(table))
+            else:
+                data.append(None)
+        rows.append(data)
+    else:
+        for x in range(len(columns)):
+            data.append(None)
+        rows.append(data)
 
 
 # Miscellaneous *************************************

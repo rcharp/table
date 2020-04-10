@@ -398,18 +398,18 @@
 
             function StyleLastRow(){
                 var last = table.rows[table.rows.length - 1];
-                var columns = last.getElementsByTagName('td');
+                var cols = last.cells;
 
-                for (var i = 0; i < columns.length; i++) {
+                for (var i = 0; i < cols.length; i++) {
 
                     // Don't set readonly on new row button, but on every column after that
                     if (i > 1)
-                        columns[i].className = 'readonly';
+                        cols[i].classList.add('readonly');
 
                     // Set the basic style on all cells that aren't the first two
                     if (i >= 2){
                         // Set the basic style on the cell
-                        columns[i].style.cssText = 'height:45px;vertical-align:middle;padding:5px 10px 5px 10px;';
+                        cols[i].style.cssText = 'height:45px;vertical-align:middle;padding:5px 10px 5px 10px;';
                     }
                 }
 
@@ -561,12 +561,44 @@
 
             function StylePreviousRow(rows){
                 // remove the 'new' button from the former last row
-                // and replace it was a select box
+                // and replace it with a select box
                 var previous = rows[rows.length - 2];
-                var button = document.getElementsByClassName('select-box')[0].cloneNode(true);
-                button.onchange=function(){RowSelected()};
-                previous.cells[1].innerHTML = '';
-                previous.cells[1].appendChild(button);
+
+                // This is the code to run if there are no rows in the new table
+                if (table.rows.length === 2){
+                    var wrapper = document.createElement('label');
+                    wrapper.className = "css-input css-checkbox css-checkbox-sm css-checkbox-primary";
+
+                    var checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'select-box';
+                    checkbox.onclick=function(){RowSelected()};
+
+                    // set checkbox as child of wrapper
+                    wrapper.appendChild(checkbox);
+                    wrapper.appendChild(document.createElement('span'));
+
+                    previous.cells[1].innerHTML = '';
+                    previous.cells[1].appendChild(wrapper);
+                }
+
+                // Otherwise, add a row as normal
+                else{
+                    // remove the 'new' button from the former last row
+                    // and replace it with a select box
+                    var button = document.getElementsByClassName('select-box')[0].cloneNode(true);
+                    button.onchange=function(){RowSelected()};
+                    previous.cells[1].innerHTML = '';
+                    previous.cells[1].appendChild(button);
+                }
+
+                // remove readonly from previous row
+                var columns = table.options.columns;
+                for (var i = 0; i < columns.length; i++){
+                    if (columns[i].readOnly !== true) {
+                        previous.cells[i+1].classList.remove('readonly');
+                    }
+                }
 
                 // Style the new select checkbox of the previous row
                 StyleCheckBoxes(previous.cells[1]);
@@ -639,7 +671,7 @@
 
                                 message.style.visibility = 'visible';
                                 message.focus();
-                                setTimeout(() => {  Refresh(); }, 1500);
+                                setTimeout(() => {  Refresh(); }, 500);
                             }
                         }
                     });

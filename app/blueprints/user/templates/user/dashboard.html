@@ -215,10 +215,10 @@
                                                                 <div class="block-content block-content-full clearfix" style="border:1px solid #d3d3d3;border-radius:4px;">
                                                                     <ul class="pull-right text-right" style="width:100px;text-align:right;list-style-type:none;">
                                                                         <li>
-                                                                            <i class="fa fa-trash-o" style="color:red;cursor:pointer;padding:20px;" onclick="DeleteTable('{{ table['id'] }}');"></i><span></span>
+                                                                            <span class="font-w300 text-primary" id="load-message-{{ table['id'] }}" style="display:none"></span>
                                                                         </li>
                                                                         <li>
-                                                                            <span class="font-w300 text-primary" id="load-message-{{ table['id'] }}" style="display:none"></span>
+                                                                            <i class="fa fa-trash-o" style="color:red;cursor:pointer;padding:10px;" onclick="DeleteTable('{{ table['id'] }}');"></i><span></span>
                                                                         </li>
                                                                     </ul>
                                                                     <div class="pull-left push-10-t">
