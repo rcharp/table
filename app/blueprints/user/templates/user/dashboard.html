@@ -211,11 +211,16 @@
                                                 {% for table in tables %}
                                                     <div class="row table-item" style="margin-bottom:10px;">
                                                         <div style="width:60%">
-                                                            <a class="block block-rounded block-link-hover3" style="cursor:pointer;" onclick="LoadTable('{{ table['id'] }}');">
+                                                            <a class="block block-rounded block-link-hover3" style="cursor:pointer;" id="{{ table['id'] }}" onclick="LoadTable('{{ table['id'] }}');">
                                                                 <div class="block-content block-content-full clearfix" style="border:1px solid #d3d3d3;border-radius:4px;">
-                                                                    <div class="pull-right" style="width:100px;">
-                                                                        <span class="font-w300 text-primary" id="load-message-{{ table['id'] }}" style="display:none"></span>
-                                                                    </div>
+                                                                    <ul class="pull-right text-right" style="width:100px;text-align:right;list-style-type:none;">
+                                                                        <li>
+                                                                            <i class="fa fa-trash-o" style="color:red;cursor:pointer" onclick="DeleteTable('{{ table['id'] }}');"></i><span></span>
+                                                                        </li>
+                                                                        <li>
+                                                                            <span class="font-w300 text-primary" id="load-message-{{ table['id'] }}" style="display:none"></span>
+                                                                        </li>
+                                                                    </ul>
                                                                     <div class="pull-left push-10-t">
                                                                         <div class="font-w600 push-5 table_name" id="table_name">{{ table['name']|table_name_filter }}&nbsp;-&nbsp;<small>({{ table['id'] }})</small></div>
                                                                         <div class="text-muted row_count" id="row_count_{{ table['id'] }}">Counting records...</div>
@@ -470,16 +475,23 @@
 
             }
             function UpdateRowCounts(result){
-                //alert(results);
-                var rows = '';
-                if (result['count'] === 1){
-                    rows = ' record';
+                if (result['count'] === -1){
+                    document.getElementById('row_count_' + result['id']).innerText = 'This table no longer exists.';
+                    document.getElementById(result['id']).onclick = function(){void(0)};
                 }
-                else{
-                    rows = ' records';
+                else if (result['count'] === 1){
+                    document.getElementById('row_count_' + result['id']).innerText = result['count'] + ' record';
+                }
+                else {
+                    document.getElementById('row_count_' + result['id']).innerText = result['count'] + ' records';
+                }
+            }
+
+            function DeleteTable(sel){
+                if (confirm("Are you sure you want to delete this table? It can't be undone.")){
+                    // Delete the table
                 }
 
-                document.getElementById('row_count_' + result['id']).innerText = result['count'] + rows;
             }
         </script>
 

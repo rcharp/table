@@ -81,7 +81,7 @@
                 <ul class="nav-header pull-right">
                     <li>
                         <div class="btn-group">
-                            <button class="btn btn-default btn-image dropdown-toggle" data-toggle="dropdown" type="button" style="margin-top:0; padding-left:10px;">
+                            <button class="btn btn-default btn-image dropdown-toggle" data-toggle="dropdown" type="button" onclick="HeaderIcons();" style="margin-top:0; padding-left:10px;">
                                 <!--<img src="../../../../static/oneui/assets/img/avatars/avatar10.jpg" alt="Avatar">-->
                                 <i class="si si-user"></i>
                                 <span class="caret"></span>
@@ -197,11 +197,12 @@
                     </div>
                     <span id="delete-selected" class="font-w300" style="cursor:pointer;margin-left:15px;margin-bottom:10px;visibility:hidden;color:red; border:1px solid red;border-radius:4px;padding:10px;" onclick="DeleteRows()"><i class="fa fa-trash-o" style="margin-right:10px;"></i>Delete <span id="selected_rows">0</span> selected row(s)</span><br /><br />
                     <div id="jtable-wrapper" name="wrapper" style="padding:0 10px 10px 10px;overflow:scroll;height:100vh;">
-                        <div id="jtable" style="position:relative;">
+                        <div id="jtable" style="position:relative;" oncontextmenu="OffsetContextMenu();">
                             <div id="AddColumnButton" tabindex="1"></div>
                         </div>
                     </div>
-                    <h5 class="font-w300" id="row-count" style="padding:15px 0 0 20px;">{{ row_count }} rows</h5>
+                    <div id="hidden-count" style="display:none">{{ row_count }}</div>
+                    <h5 class="font-w300" id="row-count" style="padding:15px 0 0 20px;">{{ row_count }} {% if row_count == 1 %}record{% else %}records{% endif %}</h5>
                     <!-- END Dynamic Table Full Pagination -->
                 </div>
                 <!-- END Page Content -->
@@ -240,11 +241,9 @@
                                         <div class="input-group-btn text-center">
                                             <button class="btn btn-default" data-toggle="dropdown" type="button" aria-expanded="false"><span class="caret"></span></button>
                                             <ul class="dropdown-menu dropdown-menu-right" id="column_type_dropdown" style="min-width:250px;">
-                                                <li style="padding:10px;"><span class="font-w300">Field Type</span></li>
-                                                <li class="divider"></li>
                                                 {% for type in types %}
                                                     <li class="column_types" style="cursor:pointer;padding:10px;position:sticky;z-index:700;" onclick="UpdateColumn('{{ type['name'] }}', '{{ type['type'] }}');">
-                                                        <span id="{{ type['type'] }}" class="font-w300">{{ type['name'] }}</span>
+                                                        <span id="{{ type['type'] }}" class="font-w300"><i class="{{ type['icon'] }}" style="margin-right:20px;"></i>{{ type['name'] }}</span>
                                                     </li>
                                                 {% endfor %}
                                                 <li style="cursor:pointer;padding:10px;position:sticky;z-index:700;display:none" onclick="DeleteColumn(this);">
@@ -330,7 +329,21 @@
                 }
             };
 
-            var clicked = function(instance, x1, y1, x2, y2, origin) {
+            var selected = function(instance, x1, y1, x2, y2, origin) {
+                // alert(table.selectedContainer + '\n' + x1 + ',' + y1 + ',' + x2 +',' + y2);
+                // alert(x1 + ',' + y1 + ',' + x2 +',' + y2);
+                if (x1 === 0 && y1 !== y2 && x2 === 9){
+                    //var first = y1;
+                    //var last = y2;
+                    //alert(first + '\n' + last);
+
+                    for (var i = y1; i < y2 + 1; i++){
+                        var checkbox = table.records[i][0].childNodes[0].getElementsByTagName('input')[0];
+                        checkbox.checked = true;
+                        RowSelected();
+                    }
+
+                }
             };
 
             var insertedColumn = function(instance) {
@@ -345,7 +358,7 @@
                 onchange: changed,
                 columnSorting:false,
                 onload: loaded,
-                onselection: clicked,
+                onselection: selected,
                 oninsertcolumn: insertedColumn,
                 style: styles,
                 pagination:false,
@@ -378,17 +391,6 @@
                 for (var i = 0; i < headers.length; i++) {
                     headers[i].className = 'font-w300 header-item';
                     headers[i].style.cssText = 'height:55px;background-color:white;vertical-align:middle;width:300px;text-transform:none;padding:5px 10px 5px 10px;';
-
-                    // Display the column type
-                    {#if (i === 0)#}
-                    {#    continue;#}
-                    {##}
-                    {#var span = document.createElement('span');#}
-                    {#var t = table.options.columns[i].type;#}
-                    {#span.innerText = '(' + t + ')';#}
-                    {#span.style.cssText = 'text-transform:capitalize';#}
-                    {#headers[i+1].appendChild(document.createElement('br'));#}
-                    {#headers[i+1].appendChild(span);#}
                 }
 
                 // Add a select all checkbox to the first column
@@ -399,28 +401,18 @@
             }
 
             function StyleLastRow(){
-                var rows = document.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-                var row_length = rows.length;
-                var last_row = rows[row_length - 1];
-                var columns = last_row.getElementsByTagName('td');
-                for (var i = 0; i < columns.length; i++) {
+                var last = table.rows[table.rows.length - 1];
+                var columns = last.getElementsByTagName('td');
 
+                for (var i = 2; i < columns.length; i++) {
                     // Set the basic style on the cell
                     columns[i].style.cssText = 'height:45px;vertical-align:middle;padding:5px 10px 5px 10px;';
-
-                    // The first column and the others get different style
-                    if (i === 0){
-                        columns[i].className = 'row-item';
-                    }
-                    else{
-                        columns[i].className = 'font-w300 row-item';
-                        columns[i].style.cssText += 'font-weight:300 !important;text-align:left;background-color:white;';
-                    }
+                    columns[i].setAttribute('disabled', 'disabled');
                 }
 
-                // Create the select boxes and the new Add Row button
-                StyleCheckBoxes(last_row);
-                return CreateNewRowButton(document.getElementById('jtable'));
+                StyleCheckBoxes(last);
+                CreateNewRowButton(document.getElementById('jtable'));
+
             }
 
             function StyleColumn(){
@@ -444,7 +436,7 @@
                 var tbl = document.getElementsByTagName('table')[0];
                 var row = tbl.rows[0];
                 var last_col = row.cells[row.cells.length - 1];
-                last_col.className = 'font-w300 row-item';
+                last_col.className = 'font-w300';
                 last_col.style.cssText = 'height:35px;background-color:white;vertical-align:middle;min-width:300px;padding:5px 10px 5px 10px;';
                 last_col.innerText = '';
 
@@ -490,6 +482,13 @@
                     select_boxes[i].onchange=function(){RowSelected()};
                 }
             }
+
+            function OffsetContextMenu(){
+                var contextMenu = document.getElementsByClassName('jexcel_contextmenu')[0];
+                contextMenu.style.cssText += 'position:absolute;';
+                //alert(contextMenu.outerHTML);
+                //contextMenu.style.cssText += "position: absolute; right: 1000px; top: 200px;";
+            }
         </script>
 
         <!-- Update the Table-->
@@ -500,7 +499,6 @@
             function UpdateTable(row_id, col_name, val) {
                 // Format the column name to be found in the database
                 col_name = col_name.toLowerCase().replace(' ', '_');
-                alert('{{ full_table_name }}');
                 $.ajax({
                     url: '{{ url_for("user.update_table") }}',
                     type: 'POST',
@@ -539,14 +537,6 @@
             function AddRow() {
                 var tbl = document.getElementsByTagName('table')[0];
                 var rows = tbl.rows;
-                var last_row = rows[rows.length - 1].cells[1];
-                var second_last_row = rows[rows.length - 2].cells[1];
-
-                // remove the 'new' button from the former last row
-                // and clone it from the one before it
-                last_row.innerHTML = second_last_row.innerHTML;
-                var button = last_row.getElementsByClassName('select-box')[0];
-                button.onchange=function(){RowSelected()};
 
                 // Reset the selection before creating the row
                 table.resetSelection();
@@ -554,19 +544,39 @@
                 // Add a new row
                 table.insertRow();
 
+                // Style the previous row
+                var previous = StylePreviousRow(rows);
+
                 // Style the new row
-                var b = StyleLastRow();
+                StyleLastRow();
 
                 // Generate the new row id
-                GenerateRowId(rows);
+                GenerateRowId(previous);
 
                 // Update the row count
-                var count = parseInt('{{ row_count }}') + 1;
-                document.getElementById('row-count').innerText = count + ' rows';
+                UpdateRowCount();
 
-                // focus on the last row
-                b.focus();
+            }
 
+            function StylePreviousRow(rows){
+                // remove the 'new' button from the former last row
+                // and replace it was a select box
+                var previous = rows[rows.length - 2];
+                var button = document.getElementsByClassName('select-box')[0].cloneNode(true);
+                button.onchange=function(){RowSelected()};
+                previous.cells[1].innerHTML = '';
+                previous.cells[1].appendChild(button);
+
+                // Style the new select checkbox of the previous row
+                StyleCheckBoxes(previous.cells[1]);
+
+                // Set the dates in the previous row
+                var createdColumnIndex = GetColumnIndex("Created On");
+                var updatedColumnIndex = GetColumnIndex("Last Updated");
+                previous.cells[createdColumnIndex].innerText = GetTodayDate();
+                previous.cells[updatedColumnIndex].innerText = GetTodayDate();
+
+                return previous;
             }
 
             // Add a new column at the end of the columns
@@ -602,14 +612,21 @@
                     $.ajax({
                         url: '{{ url_for("user.delete_rows") }}',
                         type: 'POST',
-                        data: {'rows': JSON.stringify(rows_to_delete)},
+                        data: {'rows': JSON.stringify(rows_to_delete), 'table_name': '{{ full_table_name }}'},
                         success: function (response) {
-                            var message = document.getElementById('success-message');
-                            message.innerText = count + ' row(s) have been deleted successfully.';
-                            message.style.visibility = 'visible';
-                            message.focus();
-                            setTimeout(() => {  Refresh(); }, 1500);
+                            if ('result' in response && response['result'].length > 0){
+                                var count = 0;
+                                for(var i = 0; i < response['result'].length; ++i){
+                                    if(response['result'][i] === true)
+                                        count++;
+                                }
 
+                                var message = document.getElementById('success-message');
+                                message.innerText = count + ' row(s) have been deleted successfully.';
+                                message.style.visibility = 'visible';
+                                message.focus();
+                                setTimeout(() => {  Refresh(); }, 1500);
+                            }
                         }
                     });
                 }
@@ -652,7 +669,8 @@
                 new_button.onclick=function(){AddRow()};
                 cell.appendChild(new_button);
 
-                return new_button;
+                // focus on the new button
+                new_button.focus();
 
             }
 
@@ -715,11 +733,12 @@
                 window.location.href = url;
             }
 
-            function GenerateRowId(rows){
+            function GenerateRowId(row){
                 // Generate an ID for the new row
                 $.ajax({
                     url: '{{ url_for("user.new_row_id") }}',
-                    type: 'GET',
+                    type: 'POST',
+                    data: {'table_name': '{{ full_table_name }}'},
                     success: function (response) {
                         if ('result' in response && response['result'] !== null){
                             // Save the new row to the DB
@@ -727,22 +746,22 @@
                             $.ajax({
                                 url: '{{ url_for("user.save_new_row") }}',
                                 type: 'POST',
-                                data: {'row-id': new_id},
+                                data: {'row_id': new_id, 'table_name': '{{ full_table_name }}'},
                                 success: function (response) {
-                                    try{
-                                        var idColumnIndex = GetColumnIndex("Record Id");
-                                        var createdColumnIndex = GetColumnIndex("Created On");
-                                        var updatedColumnIndex = GetColumnIndex("Last Updated");
-                                        rows[rows.length - 2].cells[idColumnIndex].innerText = new_id;
-                                        rows[rows.length - 2].cells[createdColumnIndex].innerText = GetTodayDate();
-                                        rows[rows.length - 2].cells[updatedColumnIndex].innerText = GetTodayDate();
-                                    } catch(err){
-                                        rows[rows.length - 1].remove();
+                                    if ('result' in response && response['result'] === true) {
+                                        try {
+                                            var idColumnIndex = GetColumnIndex("Record Id");
+                                            row.cells[idColumnIndex].innerText = new_id;
+                                        } catch (err) {
+                                            table.deleteRow(1, 1);
+                                        }
                                     }
-
+                                    else {
+                                        table.deleteRow(1, 1);
+                                    }
                                 },
                                 error: function (xhr) {
-                                    rows[rows.length - 1].remove();
+                                    table.deleteRow(1, 1);
                                 }
                             });
                         }
@@ -945,12 +964,25 @@
 
             }
 
+            function UpdateRowCount(){
+                var hidden_count = document.getElementById('hidden-count');
+                var row_count = document.getElementById('row-count');
+
+                var count = parseInt(hidden_count.innerText) + 1;
+                row_count.innerText = count + ' records';
+                hidden_count.innerText = count;
+            }
+
             function BackToTop(){
                 window.location.href='#AddColumnButton';
             }
 
             function Alert(){
                 alert("Test");
+            }
+
+            function HeaderIcons(){
+                alert(table.options.columns[3].type);
             }
         </script>
 

@@ -237,7 +237,7 @@ def dashboard():
     # Which table are we using?
     tables = get_tables(current_user.id)
 
-    return render_template('user/dashboard.html', current_user=current_user,tables=tables)
+    return render_template('user/dashboard.html', current_user=current_user, tables=tables)
 
 
 # View Sheet -------------------------------------------------------------------
@@ -248,7 +248,7 @@ def table(table_id):
     if current_user.role == 'admin':
         return redirect(url_for('admin.dashboard'))
 
-    from app.blueprints.api.api_functions import get_col_types, generate_id, get_rows, get_columns, get_table, count_rows, get_limit
+    from app.blueprints.api.api_functions import get_col_types, generate_id, get_records, get_columns, get_table, count_rows, get_limit
 
     if table_id is None:
         flash("There was a problem retrieving this table. Please try again.", "error")
@@ -275,7 +275,7 @@ def table(table_id):
         flash("There was a problem retrieving this table. Please try again.", "error")
         return redirect(url_for('user.dashboard'))
 
-    rows = get_rows(table, columns, lim)
+    rows = get_records(table, columns, lim)
     types = get_col_types()
     row_id = generate_id()
 
@@ -301,7 +301,6 @@ def create_table():
                 table_name = request.form['table_name']
 
                 result = create_table(table_name, current_user.id)
-                create_record(result)
 
                 return jsonify({'result': result})
             except Exception as e:
@@ -323,7 +322,7 @@ def update_table():
                 val = request.form['val']
                 col = request.form['col']
 
-                result = update_record(row, val, col)
+                result = update_record(table_name, col, val, row)
                 return jsonify({'result': result})
             except Exception as e:
                 print_traceback(e)
@@ -337,10 +336,13 @@ def update_table():
 @csrf.exempt
 def save_new_row():
     if request.method == 'POST':
-        if 'row-id' in request.form:
-            id = request.form['row-id']
-            from app.blueprints.api.api_functions import update_row
-            result = update_row(id, None, None)
+        if 'row_id' in request.form and 'table_name' in request.form:
+            table_name = request.form['table_name']
+            id = request.form['row_id']
+
+            from app.blueprints.api.api_functions import create_record
+
+            result = create_record(table_name, id)
             return jsonify({'result': result})
     return redirect(url_for('user.dashboard'))
 
@@ -349,11 +351,12 @@ def save_new_row():
 @csrf.exempt
 def delete_rows():
     if request.method == 'POST':
-        if 'rows' in request.form:
+        if 'rows' in request.form and 'table_name' in request.form:
             rows = json.loads(request.form['rows'])
+            table_name = request.form['table_name']
 
             from app.blueprints.api.api_functions import delete_rows
-            result = delete_rows(rows)
+            result = delete_rows(table_name, rows)
             return jsonify({'result': result})
     return redirect(url_for('user.dashboard'))
 
@@ -412,9 +415,17 @@ def get_row_counts():
 @user.route('/new_row_id', methods=['GET','POST'])
 @csrf.exempt
 def new_row_id():
-    from app.blueprints.api.api_functions import generate_id
-    id = generate_id()
-    return jsonify({'result': id})
+    if request.method == 'POST':
+        if 'table_name' in request.form:
+            from app.blueprints.api.api_functions import generate_record_id, get_table
+
+            # Create a new record in the db
+            table_name = request.form['table_name']
+            t = get_table(table_name)
+            id = generate_record_id(t)
+
+            return jsonify({'result': id})
+    return redirect(url_for('user.dashboard'))
 
 
 # Settings -------------------------------------------------------------------

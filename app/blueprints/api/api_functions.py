@@ -16,7 +16,7 @@ from app.extensions import db
 from sqlalchemy import exists, and_, or_, inspect, asc, func
 from flask import current_app, jsonify, make_response
 from importlib import import_module
-from app.blueprints.page.date import get_dt_string, is_datetime, format_datetime, get_utc_date_today
+from app.blueprints.page.date import get_dt_string, is_datetime, format_datetime, get_today_date_string
 from flask_login import current_user
 
 
@@ -50,21 +50,21 @@ def get_tables(user_id):
     return tables
 
 
-def get_rows(t, columns, limit=None):
+def get_records(table, columns, limit=None):
     rows = list()
 
-    # Get the rows and the columns
-    domains = db.session.query(t).limit(limit).all() if limit is not None else db.session.query(t).all()
+    # Get the records
+    records = db.session.query(table).limit(limit).all() if limit is not None else db.session.query(table).all()
     if columns is None: return domains
 
-    for domain in domains:
+    for record in records:
         # False is the first item in each row, which is the select checkbox
         data = [False]
 
         for column in [x for x in columns if x.name not in hidden_columns()]:
 
             # Get the column's value for the row
-            e = getattr(domain, column.name, cont())
+            e = getattr(record, column.name, cont())
 
             # Format any dates
             if is_datetime(e):
@@ -80,7 +80,6 @@ def get_rows(t, columns, limit=None):
 
 
 def get_columns(d):
-
     try:
         cols = [{'title': ' ', 'type': 'checkbox', 'width': 50}]
 
@@ -89,6 +88,7 @@ def get_columns(d):
         for column in columns:
             width = 250
             options = {}
+            source = list()
             data = {}
             type = str(column.type).lower().strip()
 
@@ -108,13 +108,22 @@ def get_columns(d):
                 type = 'calendar'
                 options.update({'today': True, 'format': 'MM/DD/YYYY'})
 
+            # Get linked column type
+            if column.name == 'linked_id':
+                type = 'dropdown'
+                source = ['Ferrari', 'Lamborghini', 'MacLaren', 'Bentley']
+
             # Make created and updated columns, as well as record id, readonly
-            if column.name == 'created_on' or column.name == 'updated_on' or column.name == 'record_id':
+            if column.name == 'created_on' or column.name == 'updated_on':
                 width = 150
                 data.update({'readOnly': True})
 
+            if column.name == 'record_id':
+                width = 200
+                data.update({'readOnly': True})
+
             # Update the column's data
-            data.update({'title': format_column_name(column.name), 'type': type, 'options': options, 'width': width})
+            data.update({'title': format_column_name(column.name), 'type': type, 'options': options, 'source': source, 'width': width})
 
             # Don't add hidden columns
             cols.append(data)
@@ -142,36 +151,38 @@ def create_table(table_name, user_id, linked=None):
 
     try:
         # If this table is linked to another
-        if linked is not None:
-            sql = ("CREATE TABLE `%s` ("
-                   "`id` int(11) NOT NULL AUTO_INCREMENT,"
-                   "`record_id` varchar(255) DEFAULT NULL,"
-                   "`created_on` date DEFAULT NULL,"
-                   "`updated_on` date DEFAULT NULL,"
-                   "`user_id` int(11) DEFAULT '%s',"
-                   "`table_id` varchar(255) DEFAULT NULL,"
-                   "`linked_id` varchar(255) DEFAULT '%s',"
-                   "KEY ix_%s_user_id (`user_id`), "
-                   "KEY ix_%s_linked_id (`linked_id`), "
-                   "PRIMARY KEY (`id`), "
-                   "CONSTRAINT `%s_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE, "
-                   "CONSTRAINT `%s_ibfk_3` FOREIGN KEY (`linked_id`) REFERENCES `%s` (`table_id`) ON DELETE CASCADE ON UPDATE CASCADE"
-                   ") ENGINE=InnoDB DEFAULT CHARSET=utf8 "
-                   "AUTO_INCREMENT=1 ;" % (table_name, user_id, linked, table_name, table_name, table_name, table_name, linked))
-        else:
-            sql = ("CREATE TABLE `%s` ("
-                   "`id` int(11) NOT NULL AUTO_INCREMENT,"
-                   "`record_id` varchar(255) DEFAULT NULL,"
-                   "`created_on` date DEFAULT NULL,"
-                   "`updated_on` date DEFAULT NULL,"
-                   "`user_id` int(11) DEFAULT '%s',"
-                   "`table_id` varchar(255) DEFAULT '%s',"
-                   "`linked_id` varchar(255) DEFAULT NULL,"
-                   "KEY ix_%s_user_id (`user_id`), "
-                   "PRIMARY KEY (`id`), "
-                   "CONSTRAINT `%s_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE "
-                   ") ENGINE=InnoDB DEFAULT CHARSET=utf8 "
-                   "AUTO_INCREMENT=1 ;" % (table_name, user_id, table_name, table_name, table_name))
+        # if linked is not None:
+        #     sql = ("CREATE TABLE `%s` ("
+        #            "`id` int(11) NOT NULL AUTO_INCREMENT,"
+        #            "`record_id` varchar(255) DEFAULT NULL UNIQUE,"
+        #            "`created_on` date DEFAULT NULL,"
+        #            "`updated_on` date DEFAULT NULL,"
+        #            "`user_id` int(11) DEFAULT '%s',"
+        #            "`table_id` varchar(255) DEFAULT NULL,"
+        #            "`linked_id` varchar(255) DEFAULT '%s',"
+        #            "KEY ix_%s_user_id (`user_id`), "
+        #            "KEY ix_%s_linked_id (`linked_id`), "
+        #            "PRIMARY KEY (`id`), "
+        #            "CONSTRAINT `%s_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE, "
+        #            "CONSTRAINT `%s_ibfk_3` FOREIGN KEY (`linked_id`) REFERENCES `%s` (`table_id`) ON DELETE CASCADE ON UPDATE CASCADE"
+        #            ""
+        #            ") ENGINE=InnoDB DEFAULT CHARSET=utf8 "
+        #            "AUTO_INCREMENT=1 ;" % (table_name, user_id, linked, table_name, table_name, table_name, table_name, linked))
+        # else:
+        sql = ("CREATE TABLE `%s` ("
+               "`id` int(11) NOT NULL AUTO_INCREMENT,"
+               "`record_id` varchar(255) DEFAULT NULL,"
+               "`created_on` date DEFAULT NULL,"
+               "`updated_on` date DEFAULT NULL,"
+               "`user_id` int(11) DEFAULT '%s',"
+               "`table_id` varchar(255) DEFAULT '%s',"
+               "`linked_id` varchar(255) DEFAULT NULL,"
+               "KEY ix_%s_user_id (`user_id`), "
+               "PRIMARY KEY (`id`), "
+               "CONSTRAINT `%s_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE, "
+               "CONSTRAINT `%s_iu_1` UNIQUE (`record_id`)"
+               ") ENGINE=InnoDB DEFAULT CHARSET=utf8 "
+               "AUTO_INCREMENT=1 ;" % (table_name, user_id, table_name, table_name, table_name, table_name))
 
         # Create the table
         mycursor.execute(sql)
@@ -204,14 +215,12 @@ def save_table(table_name, user_id):
         return False
 
 
-def create_record(table_name):
-
+def create_record(table_name, record_id):
     if table_name is None: return
 
     try:
-        record_id = generate_record_id(get_table(table_name))
-        today = get_utc_date_today()
-        print(today)
+        # record_id = generate_record_id(get_table(table_name))
+        today = get_today_date_string()
         mydb = mysql.connector.connect(
             host=current_app.config.get('SQLALCHEMY_HOST'),
             user=current_app.config.get('SQLALCHEMY_USER'),
@@ -226,13 +235,17 @@ def create_record(table_name):
         mydb.commit()
         mycursor.close()
         mydb.close()
+        return True
     except Exception as e:
         print_traceback(e)
+        return False
+    except Error as r:
+        print_traceback(r)
+        return False
 
 
-def update_record(table_name, id, col, val):
-
-    if table_name is None: return false
+def delete_record(table_name, row):
+    if table_name is None: return False
 
     try:
         mydb = mysql.connector.connect(
@@ -243,7 +256,7 @@ def update_record(table_name, id, col, val):
         )
         mycursor = mydb.cursor()
 
-        sql = ("UPDATE %s SET %s = %s WHERE `record_id` = %s" % (table_name, col, val, id))
+        sql = ("DELETE FROM %s WHERE `record_id` = '%s'" % (table_name, row))
         mycursor.execute(sql)
 
         mydb.commit()
@@ -254,37 +267,37 @@ def update_record(table_name, id, col, val):
     except Exception as e:
         print_traceback(e)
         return False
+    except Error as r:
+        print_traceback(r)
+        return False
 
 
-# def update_row(id, val, col):
-#     try:
-#
-#         # Get the corresponding item from the table
-#         from app.blueprints.api.models.domains import Domain
-#
-#         if not db.session.query(exists().where(Domain.id == id)).scalar():
-#             d = Domain()
-#             d.id = id
-#             d.save()
-#
-#             return True
-#         else:
-#             d = Domain.query.filter(Domain.id == id).scalar()
-#
-#             # Handle booleans
-#             if val == 'true': val = True
-#             elif val == 'false': val = False
-#
-#             # If the value has been changed, then update the table
-#             if getattr(d, col) != val:
-#                 setattr(d, col, val)
-#                 d.save()
-#
-#                 return True
-#         return False
-#     except Exception as e:
-#         print_traceback(e)
-#         return False
+def update_record(table_name, col, val, row):
+    if table_name is None: return False
+
+    try:
+        mydb = mysql.connector.connect(
+            host=current_app.config.get('SQLALCHEMY_HOST'),
+            user=current_app.config.get('SQLALCHEMY_USER'),
+            passwd=current_app.config.get('SQLALCHEMY_PASSWORD'),
+            database=current_app.config.get('SQLALCHEMY_DATABASE')
+        )
+        mycursor = mydb.cursor()
+
+        sql = ("UPDATE %s SET %s = %s WHERE `record_id` = %s" % (table_name, col, val, row))
+        mycursor.execute(sql)
+
+        mydb.commit()
+        mycursor.close()
+        mydb.close()
+
+        return True
+    except Exception as e:
+        print_traceback(e)
+        return False
+    except Error as r:
+        print_traceback(r)
+        return False
 
 
 def add_column(table, column, type):
@@ -342,12 +355,12 @@ def update_column(table, name, old, type):
         return False
 
 
-def delete_rows(rows):
-    from app.blueprints.api.models.domains import Domain
+def delete_rows(table_name, rows):
+    results = list()
     for row in rows:
-        d = Domain.query.filter(Domain.id == row).scalar()
-        d.delete()
-    return True
+        result = delete_record(table_name, row)
+        results.append(result)
+    return results
 
 
 def delete_column(rows):
@@ -415,22 +428,26 @@ def count_rows(table_name):
 
     if table_name is None: return 0
 
-    # conn = db.create_engine(current_app.config.get('SQLALCHEMY_DATABASE_URI'), connect_args={'connect_timeout': 300}, pool_timeout=300, pool_recycle=3600)
-    mydb = mysql.connector.connect(
-        host=current_app.config.get('SQLALCHEMY_HOST'),
-        user=current_app.config.get('SQLALCHEMY_USER'),
-        passwd=current_app.config.get('SQLALCHEMY_PASSWORD'),
-        database=current_app.config.get('SQLALCHEMY_DATABASE')
-    )
-    mycursor = mydb.cursor()
-    mycursor.execute('select * from %s' % table_name)
-    mycursor.fetchall()
-    count = mycursor.rowcount
+    try:
+        mydb = mysql.connector.connect(
+            host=current_app.config.get('SQLALCHEMY_HOST'),
+            user=current_app.config.get('SQLALCHEMY_USER'),
+            passwd=current_app.config.get('SQLALCHEMY_PASSWORD'),
+            database=current_app.config.get('SQLALCHEMY_DATABASE')
+        )
+        mycursor = mydb.cursor()
+        mycursor.execute('select * from %s' % table_name)
+        mycursor.fetchall()
+        count = mycursor.rowcount
 
-    mydb.commit()
-    mycursor.close()
-    mydb.close()
-    return count
+        mydb.commit()
+        mycursor.close()
+        mydb.close()
+        return count
+    except Exception as e:
+        return -1
+    except Error as r:
+        return -1
 
 
 def get_limit(lim):
@@ -439,15 +456,16 @@ def get_limit(lim):
 
 
 def get_col_types():
-    return [{'name': 'Text', 'type': 'text'},
-            {'name': 'Email', 'type': 'email'},
-            {'name': 'Checkbox', 'type': 'checkbox'},
-            {'name': 'Date', 'type': 'calendar'},
-            {'name': 'Numeric', 'type': 'numeric'},
-            {'name': 'Phone Number', 'type': 'phone'},
-            {'name': 'URL', 'type': 'url'},
-            {'name': 'Currency', 'type': 'currency'},
-            {'name': 'Percent', 'type': 'percent'}]
+    return [{'name': 'Text', 'type': 'text', 'icon': "fa fa-file-text-o"},
+            {'name': 'Email', 'type': 'email', 'icon': "si si-envelope-letter"},
+            {'name': 'Checkbox', 'type': 'checkbox', 'icon': "fa fa-check-square-o"},
+            {'name': 'Date', 'type': 'calendar', 'icon': "fa fa-calendar-check-o"},
+            {'name': 'Numeric', 'type': 'numeric', 'icon': "fa fa-hashtag"},
+            {'name': 'Phone Number', 'type': 'phone', 'icon': "fa fa-phone"},
+            {'name': 'URL', 'type': 'url', 'icon': "si si-globe"},
+            {'name': 'Currency', 'type': 'currency', 'icon': "fa fa-dollar"},
+            {'name': 'Percent', 'type': 'percent', 'icon': "fa fa-percent"},
+            {'name': 'Linked', 'type': 'dropdown', 'icon': "fa fa-external-link"}]
 
 
 def format_column_name(col):
@@ -488,3 +506,26 @@ def hidden_columns():
 
 def cont():
     pass
+
+# Used to populate the db's record ids
+def pop():
+    mydb = mysql.connector.connect(
+        host=current_app.config.get('SQLALCHEMY_HOST'),
+        user=current_app.config.get('SQLALCHEMY_USER'),
+        passwd=current_app.config.get('SQLALCHEMY_PASSWORD'),
+        database=current_app.config.get('SQLALCHEMY_DATABASE')
+    )
+    mycursor = mydb.cursor()
+
+    table = get_table('domains_tbl_domains')
+    for x in range(165, 284):
+        y = int(str(x) + str(1))
+        rec = generate_record_id(table)
+
+        sql = ("UPDATE %s SET %s = '%s' WHERE `id` = '%s'" % ('domains_tbl_domains', 'record_id', rec, y))
+
+        mycursor.execute(sql)
+
+        mydb.commit()
+    mycursor.close()
+    mydb.close()
