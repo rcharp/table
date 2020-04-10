@@ -122,8 +122,11 @@ def get_columns(d):
                 width = 200
                 data.update({'readOnly': True})
 
+            # Get the column's title
+            title = get_column_title(column.name)
+
             # Update the column's data
-            data.update({'title': format_column_name(column.name), 'type': type, 'options': options, 'source': source, 'width': width})
+            data.update({'title': title, 'type': type, 'options': options, 'source': source, 'width': width})
 
             # Don't add hidden columns
             cols.append(data)
@@ -274,6 +277,7 @@ def delete_record(table_name, row):
 
 def update_record(table_name, col, val, row):
     if table_name is None: return False
+    col = get_column_name(col)
 
     try:
         mydb = mysql.connector.connect(
@@ -284,7 +288,7 @@ def update_record(table_name, col, val, row):
         )
         mycursor = mydb.cursor()
 
-        sql = ("UPDATE %s SET %s = %s WHERE `record_id` = %s" % (table_name, col, val, row))
+        sql = ("UPDATE %s SET %s = '%s' WHERE `record_id` = '%s'" % (table_name, col, val, row))
         mycursor.execute(sql)
 
         mydb.commit()
@@ -322,7 +326,7 @@ def add_column(table, column, type):
 
 def update_column(table, name, old, type):
     try:
-        old = col_title_to_name(old)
+        old = get_column_name(old)
 
         access_key = current_app.config.get('AWS_ACCESS_KEY_ID')
         secret_key = current_app.config.get('AWS_ACCESS_KEY_SECRET')
@@ -468,11 +472,33 @@ def get_col_types():
             {'name': 'Linked', 'type': 'dropdown', 'icon': "fa fa-external-link"}]
 
 
-def format_column_name(col):
-    if col == 'id': col = 'record id'
-    if col == 'updated_on': col = 'last updated'
-    if col == 'linked_id': col = 'linked to'
-    return col.replace('_', ' ').title()
+def get_default_column_names():
+    cols = {'id': 'Id',
+            'created_on': 'Created On',
+            'updated_on': 'Last Updated',
+            'table_id': 'Table Id',
+            'record_id': 'Record Id',
+            'linked_id': 'Linked To'
+            }
+    return cols
+
+
+def get_column_title(name):
+    names = get_default_column_names()
+
+    for k, v in names.items():
+        if name == k:
+            return names[name]
+    return name.replace('_', ' ').title()
+
+
+def get_column_name(title):
+    titles = get_default_column_names()
+
+    for k, v in titles.items():
+        if title == v:
+            return k
+    return title.lower().replace(' ','_')
 
 
 def print_traceback(e):
@@ -496,16 +522,13 @@ def split_table_name(table_name):
     return name, 'tbl_' + table_id
 
 
-def col_title_to_name(col):
-    return col.lower().replace(' ','_')
-
-
 def hidden_columns():
     return ['id', 'table_id', 'user_id']
 
 
 def cont():
     pass
+
 
 # Used to populate the db's record ids
 def pop():

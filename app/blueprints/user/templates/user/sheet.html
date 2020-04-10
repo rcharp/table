@@ -193,7 +193,7 @@
                 <!-- Page Content -->
                 <div class="content" style="padding:15px 0 0 0;width:100%;height:100%;overflow:hidden;">
                     <div class="pull-right">
-                        <span id="success-message" style="margin-left:10px;visibility:hidden;color:green;font-size:14px;">Table updated successfully.</span><br /><br />
+                        <span id="success-message" style="margin:0 10px 0 10px;visibility:hidden;color:green;font-size:14px;">Table updated successfully.</span><br /><br />
                     </div>
                     <span id="delete-selected" class="font-w300" style="cursor:pointer;margin-left:15px;margin-bottom:10px;visibility:hidden;color:red; border:1px solid red;border-radius:4px;padding:10px;" onclick="DeleteRows()"><i class="fa fa-trash-o" style="margin-right:10px;"></i>Delete <span id="selected_rows">0</span> selected row(s)</span><br /><br />
                     <div id="jtable-wrapper" name="wrapper" style="padding:0 10px 10px 10px;overflow:scroll;height:100vh;">
@@ -308,12 +308,12 @@
                 var idColumnIndex = GetColumnIndex("Record Id");
 
                 // Get the column name of the cell we're changing
-                var col_name = document.getElementsByTagName('table')[0].rows[0].cells[cellIndex].innerText;
+                var col_title = document.getElementsByTagName('table')[0].rows[0].cells[cellIndex].innerText;
 
                 // Get the row item's id
                 var item_id = document.getElementsByTagName('table')[0].rows[rowIndex].cells[idColumnIndex].innerText;
 
-                UpdateTable(item_id, col_name, value);
+                UpdateTable(item_id, col_title, value);
             };
 
             // Style the cells on load
@@ -330,13 +330,8 @@
             };
 
             var selected = function(instance, x1, y1, x2, y2, origin) {
-                // alert(table.selectedContainer + '\n' + x1 + ',' + y1 + ',' + x2 +',' + y2);
-                // alert(x1 + ',' + y1 + ',' + x2 +',' + y2);
-                if (x1 === 0 && y1 !== y2 && x2 === 9){
-                    //var first = y1;
-                    //var last = y2;
-                    //alert(first + '\n' + last);
-
+                //alert(x1 + '\n' + y1 + '\n' + x2 + '\n' + y2);
+                if (x1 === 0 && y1 !== y2 && x2 + 1 === table.options.columns.length){
                     for (var i = y1; i < y2 + 1; i++){
                         var checkbox = table.records[i][0].childNodes[0].getElementsByTagName('input')[0];
                         checkbox.checked = true;
@@ -382,6 +377,7 @@
                 CreateNewRowButton(tbl);
                 CreateNewColumnButton(tbl);
                 StyleSelectBoxes();
+                StyleLastRow();
             }
 
             // Style the headers. This is called right before the page is done loading.
@@ -404,15 +400,21 @@
                 var last = table.rows[table.rows.length - 1];
                 var columns = last.getElementsByTagName('td');
 
-                for (var i = 2; i < columns.length; i++) {
-                    // Set the basic style on the cell
-                    columns[i].style.cssText = 'height:45px;vertical-align:middle;padding:5px 10px 5px 10px;';
-                    columns[i].setAttribute('disabled', 'disabled');
+                for (var i = 0; i < columns.length; i++) {
+
+                    // Don't set readonly on new row button, but on every column after that
+                    if (i > 1)
+                        columns[i].className = 'readonly';
+
+                    // Set the basic style on all cells that aren't the first two
+                    if (i >= 2){
+                        // Set the basic style on the cell
+                        columns[i].style.cssText = 'height:45px;vertical-align:middle;padding:5px 10px 5px 10px;';
+                    }
                 }
 
                 StyleCheckBoxes(last);
                 CreateNewRowButton(document.getElementById('jtable'));
-
             }
 
             function StyleColumn(){
@@ -498,7 +500,6 @@
             // Displays a message on successful update
             function UpdateTable(row_id, col_name, val) {
                 // Format the column name to be found in the database
-                col_name = col_name.toLowerCase().replace(' ', '_');
                 $.ajax({
                     url: '{{ url_for("user.update_table") }}',
                     type: 'POST',
@@ -607,7 +608,14 @@
                     rows_to_delete.push(item_id);
                 }
 
-                if (confirm("Are you sure you want to delete " + count + " row(s)? This can't be undone.")){
+                var rows = '';
+                if (count === 1){
+                    rows = 'row';
+                }
+                else{
+                    rows = 'rows';
+                }
+                if (confirm("Are you sure you want to delete " + count + " " + rows + "? This can't be undone.")){
                     // Delete the rows
                     $.ajax({
                         url: '{{ url_for("user.delete_rows") }}',
@@ -622,7 +630,13 @@
                                 }
 
                                 var message = document.getElementById('success-message');
-                                message.innerText = count + ' row(s) have been deleted successfully.';
+                                if (count === 1){
+                                    message.innerText = count + ' row has been deleted successfully.';
+                                }
+                                else{
+                                    message.innerText = count + ' row(s) have been deleted successfully.';
+                                }
+
                                 message.style.visibility = 'visible';
                                 message.focus();
                                 setTimeout(() => {  Refresh(); }, 1500);
@@ -687,8 +701,8 @@
                 new_button.id = 'add-column-button';
                 new_column.appendChild(new_button);
 
-                new_column.className = 'text-center';
-                new_column.style.cssText = "padding-top:17px;cursor:pointer; border:1px solid #d3d3d3;border-radius:4px;width:65px;height:" + height + "px; position:absolute;top:1px;right:-55px;";
+                //new_column.className = 'text-center';
+                new_column.style.cssText = "padding:22px 0 0 24px;cursor:pointer;background-color:white;border:1px solid #d3d3d3;border-radius:4px;width:65px;height:" + height + "px; position:absolute;top:1px;right:-55px;";
                 new_column.onclick=function(){AddColumn()};
             }
 
